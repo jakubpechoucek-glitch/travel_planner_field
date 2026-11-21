@@ -67,6 +67,11 @@ export default function Users({ myId }: { myId: number | null }) {
   }, [loadList]);
   useEffect(() => setPage(0), [q, role, login, inactive]);
 
+  // the person's page opens below a long list: bring it into view
+  useEffect(() => {
+    if (open !== null) setTimeout(() => document.getElementById("user-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }, [open]);
+
   const changed = async () => { await Promise.all([loadMeta(), loadList()]); };
 
   return (
@@ -153,10 +158,12 @@ export default function Users({ myId }: { myId: number | null }) {
         )}
       </section>
 
-      {meta && open === "new" && <NewPerson meta={meta} onCancel={() => setOpen(null)} onDone={async (id) => { await changed(); setOpen(id); }} />}
-      {meta && typeof open === "number" && (
-        <UserPanel key={open} id={open} meta={meta} myId={myId} onChanged={changed} onClose={() => setOpen(null)} />
-      )}
+      <div id="user-panel" style={{ scrollMarginTop: 16 }}>
+        {meta && open === "new" && <NewPerson meta={meta} onCancel={() => setOpen(null)} onDone={async (id) => { await changed(); setOpen(id); }} />}
+        {meta && typeof open === "number" && (
+          <UserPanel key={open} id={open} meta={meta} myId={myId} onChanged={changed} onClose={() => setOpen(null)} />
+        )}
+      </div>
     </>
   );
 }
