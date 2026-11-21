@@ -37,15 +37,36 @@ See [Architecture](07-architecture.md#73-authentication-and-authorization).
 
 ## 2.3 User lifecycle
 
-Area managers join and leave. An administrator must be able to:
+Implemented on the **Users** page (administrators only; `backend/travel_planner/users.py`).
 
-- add a person and **link their login** (the administrator types the sign-in e-mail once; the server stores only its keyed hash, never the address);
-- assign a position, manager, region/cluster/local office and role;
-- deactivate a person on their end date (history is kept; future generated trips are flagged for review);
-- move a person to a new manager or cluster with an effective date;
-- import people in bulk from a spreadsheet (needed for the first load of roughly 120 supervisors and managers).
+**Getting people in.** People come from the [organization import](03-organization-model.md#35-the-organization-import-phase-1); *Add a person* covers people who are not in the import
+(for example a future Training or Legal lead).
 
-Governance: at least two administrators, and every administrative change is written to the audit log.
+**Giving access** takes two steps, both on the person's page:
+
+1. **Link the sign-in.** The administrator types the person's work e-mail once. The server turns it into a keyed hash, stores only the hash and forgets the address; it is never shown again,
+   never logged and never in the audit log. A typo means the person cannot sign in; linking again replaces it. The same sign-in cannot be linked to two people.
+2. **Give a role** (with a scope for regional and area planners: the region or the cluster).
+
+**Faster for hundreds of people**
+
+- *Link many sign-ins at once*: paste lines of `e-mail, employee number` (or the full name, either order; comma, semicolon or tab). A check shows what would happen, with problems by line number
+  (unknown person, invalid address, address used twice, address already linked to someone else). Nothing is saved until every line is fine. The addresses are not echoed back.
+- *Suggested roles*: the Head of Field becomes a national planner, each Regional Manager the regional planner of their region, each Area Manager the area planner of their cluster. Existing roles stay.
+
+**Changes over time**
+
+- *Deactivate* a person who leaves: they can no longer sign in at once, the history stays; *Reactivate* if they return.
+- *Position, manager and place* change with a *valid from* date; the previous assignment is kept as history, as in the import.
+- Roles can be added and removed at any time; every change is in the audit log (who and what, no addresses).
+
+**Safeguards**
+
+- The application always keeps at least one **administrator who can sign in**: removing the last administrator role, deactivating or unlinking the last administrator is refused
+  (unless a bootstrap administrator is configured). The Users page recommends at least two.
+- You cannot deactivate yourself.
+- A global role (administrator, national planner, ...) is held once per person; a scoped role once per scope.
+- The first administrator is set through configuration (`BOOTSTRAP_ADMIN_HASHES`); see the [development guide](10-development.md).
 
 ## 2.4 Views per role
 

@@ -21,6 +21,7 @@ from .migrate import apply_migrations
 from .routes_catalog import router as catalog_router
 from .routes_org import router as org_router
 from .routes_plan import router as plan_router
+from .routes_users import router as users_router
 
 log = logging.getLogger("travel_planner")
 
@@ -50,6 +51,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(org_router)
     app.include_router(catalog_router)
     app.include_router(plan_router)
+    app.include_router(users_router)
 
     @app.exception_handler(RequestValidationError)
     async def friendly_validation_error(_: Request, exc: RequestValidationError):
@@ -69,6 +71,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "linked": identity.person_id is not None,
             "has_access": identity.has_access,
             "name": identity.full_name,
+            "person_id": identity.person_id,
             "roles": list(identity.roles),
         }
 

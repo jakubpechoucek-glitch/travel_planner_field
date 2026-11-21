@@ -111,7 +111,17 @@ Decisions taken while building the editing; please confirm:
 | E6 | After the plan is *published*, changes are allowed and marked "after publication" in the history. | Require approval by the Head of Field for changes after publication |
 | E7 | The administrator that signs in through the bootstrap setting has no person record, so the history shows "Administrator". | Link every administrator to a person on the first sign-in |
 
-## 9.7 Product and design
+## 9.7 User administration decisions
+
+| # | Decision | Alternative |
+|---|----------|-------------|
+| A1 | The sign-in is linked by an administrator typing the person's e-mail, because addresses are not stored. A typo is only discovered when the person cannot sign in. | Let people claim their own account the first time they sign in, with an administrator approving the request (the app would see the address once, in the request) |
+| A2 | The employee list does not contain sign-in addresses. They have to come from HR or the company directory as a list of `e-mail, employee number`. | Ask IT for an export from the directory |
+| A3 | Roles are suggested from the organization, but *Viewer* (supervisors see their own trips) is not assigned automatically, since that view is not built yet. | Give every supervisor the viewer role when "My plan" exists |
+| A4 | Deactivating a person blocks sign-in at once but keeps their history and trips. Their open trips are not changed automatically. | Flag a deactivated person's future trips for review |
+| A5 | There is no self-service for planners to give access to others; only administrators manage users. | Let regional planners manage the area planners of their region |
+
+## 9.8 Product and design
 
 | # | Question |
 |---|----------|
@@ -122,7 +132,7 @@ Decisions taken while building the editing; please confirm:
 | U5 | Notifications: e-mail only, or also Microsoft Teams? (Not in MVP.) |
 | U6 | Time to retain trip history after the plan year closes? |
 
-## 9.8 Next steps
+## 9.9 Next steps
 
 1. Business owner reviews documents 1 to 5 and answers B1 to B12, P1 to P5.
 2. Follow-up meeting (the Thursday session proposed at the kickoff) to walk through the calendar views.

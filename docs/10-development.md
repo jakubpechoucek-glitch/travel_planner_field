@@ -68,6 +68,23 @@ All under `/api/plan` and limited by role scope (`backend/travel_planner/access.
 
 Every change body has `reason` (3 to 500 characters), `category` and optionally `expected_updated_at` (the token from the detail).
 
+## 10.3d User administration (API)
+
+Under `/api/admin/users` (administrators only):
+
+| Call | Purpose |
+|------|---------|
+| `GET /meta` | Positions, org units, roles and their scope kind, the number of administrators who can sign in |
+| `GET ?q=&role=&login=&active=&limit=&offset=` | People with position, place, roles and whether a sign-in is linked |
+| `POST`, `PUT /{id}` | Add a person; change name, employee number, active flag, or the effective-dated assignment |
+| `POST /{id}/login` `{email}`, `DELETE /{id}/login` | Link (or replace) and unlink a sign-in. The address is hashed and discarded |
+| `POST /{id}/roles`, `DELETE /{id}/roles/{role_id}` | Add and remove a role (scope required for regional and area planners) |
+| `POST /bulk-login?commit=` `{text}` | Link many sign-ins from pasted lines; preview by default |
+| `POST /suggest-roles?commit=` | Roles that follow from the organization; preview by default |
+
+To become the first administrator without a person record: `IDENTITY_KEY=... python tools/hash_email.py` and put the printed hash into `BOOTSTRAP_ADMIN_HASHES`.
+Once real administrators have a linked sign-in and the role, remove that setting.
+
 ## 10.4 Configuration
 
 | Variable | Used in | Meaning |

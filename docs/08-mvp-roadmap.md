@@ -47,7 +47,7 @@ Progress:
 - [x] **Plan generator**: rules to trips (weeks, blackouts, limits, combining, yearly limits), preview and regeneration that keeps edits, checks, heatmap and trip list
 - [x] **Manual editing with mandatory reasons**: change dates, people and notes, cancel, confirm, mark as done, add a trip by hand; live effect on the rules, acknowledgement of warnings, history, role scope
 - [x] Scoped plan view and editing for regional and area planners
-- [ ] Admin screens for users and login linking (needed to give regional and area planners their scope)
+- [x] **Admin screens for users**: people, sign-in linking (hashed), roles with scope, bulk linking, suggested roles, deactivation, last-administrator safeguard
 - [ ] People timeline; synergy suggestions; "My plan" for supervisors; export
 
 **Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.
