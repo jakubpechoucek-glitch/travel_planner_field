@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Catalog from "./Catalog";
+import MyPlan from "./MyPlan";
 import Org from "./Org";
 import Users from "./Users";
 import Plan from "./Plan";
@@ -13,7 +14,7 @@ type State =
 
 export default function App() {
   const [state, setState] = useState<State>({ kind: "loading" });
-  const [tab, setTab] = useState<"home" | "org" | "catalog" | "plan" | "users">("home");
+  const [tab, setTab] = useState<"home" | "myplan" | "org" | "catalog" | "plan" | "users">("home");
 
   const load = useCallback(async () => {
     try {
@@ -38,12 +39,19 @@ export default function App() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (state.kind !== "ready" || !state.me.has_access || state.me.person_id === null) return;
+    const planner = state.me.roles.some((r) => ["administrator", "national_planner", "regional_planner", "area_planner"].includes(r));
+    if (!planner) setTab("myplan");   // supervisors land on their own plan
+  }, [state]);
+
   const signOut = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setState({ kind: "signin" });
   };
 
   const hasAccess = state.kind === "ready" && state.me.has_access;
+  const hasPerson = hasAccess && state.kind === "ready" && state.me.person_id !== null;
   const isAdmin = state.kind === "ready" && state.me.roles.includes("administrator");
   const canSeePlan =
     state.kind === "ready" && state.me.roles.some((r) => ["administrator", "national_planner", "regional_planner", "area_planner"].includes(r));
@@ -59,6 +67,9 @@ export default function App() {
       {hasAccess && (
         <nav className="tabs" aria-label="Main">
           <button className={tab === "home" ? "tab on" : "tab"} onClick={() => setTab("home")}>Home</button>
+          {hasPerson && (
+            <button className={tab === "myplan" ? "tab on" : "tab"} onClick={() => setTab("myplan")}>My plan</button>
+          )}
           {canSeePlan && (
             <button className={tab === "plan" ? "tab on" : "tab"} onClick={() => setTab("plan")}>Plan</button>
           )}
@@ -71,6 +82,7 @@ export default function App() {
           )}
         </nav>
       )}
+      {hasPerson && tab === "myplan" && <MyPlan />}
       {hasAccess && tab === "catalog" && <Catalog isAdmin={isAdmin} />}
       {canSeeOrg && tab === "org" && <Org isAdmin={isAdmin} />}
       {isAdmin && tab === "users" && <Users myId={state.kind === "ready" ? state.me.person_id : null} />}

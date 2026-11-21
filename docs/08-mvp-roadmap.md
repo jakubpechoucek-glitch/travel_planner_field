@@ -48,7 +48,8 @@ Progress:
 - [x] **Manual editing with mandatory reasons**: change dates, people and notes, cancel, confirm, mark as done, add a trip by hand; live effect on the rules, acknowledgement of warnings, history, role scope
 - [x] Scoped plan view and editing for regional and area planners
 - [x] **Admin screens for users**: people, sign-in linking (hashed), roles with scope, bulk linking, suggested roles, deactivation, last-administrator safeguard
-- [ ] People timeline; synergy suggestions; "My plan" for supervisors; export
+- [x] **My plan** for everyone with a sign-in (own trips, reasons for changes, who is on the trip) and **calendar export (.ics)**; **publishing** of the plan
+- [ ] People timeline; synergy suggestions; Excel export of the plan; "suggest a change" from a supervisor to the manager
 
 **Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.
 

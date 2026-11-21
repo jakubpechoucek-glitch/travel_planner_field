@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { api } from "./api";
 import { AddTrip, TripPanel } from "./TripPanel";
 
 type Row = { unit_id: number | null; label: string; months: number[] };
 type Summary = {
   year: number;
   status: string;
+  published_at: string | null;
   regions: { id: number; name: string; rows: Row[] }[];
   nationwide: Row;
   totals: { trips: number; merged: number; manual: number };
@@ -72,6 +74,14 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
     void fetch(`/api/plan/${year}/trips?${q}`).then(async (r) => setTrips(r.ok ? ((await r.json()) as TripRow[]) : []));
   }, [sel, tick]);
 
+  const [statusMsg, setStatusMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const setStatus = async (to: "published" | "review" | "closed", confirm: string, done: string) => {
+    if (!window.confirm(confirm)) return;
+    const r = await api(`/api/admin/plan/${year}/status`, "POST", { status: to });
+    setStatusMsg(r.ok ? { text: done, ok: true } : { text: r.error ?? "", ok: false });
+    await load();
+  };
+
   const changed = async () => {
     setTick((t) => t + 1);
     await load();
@@ -113,6 +123,10 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
           marked <em>block</em> does not allow the change. Trips you changed or added are kept when the plan is generated again. You can change the
           trips of your own area only.
         </p>
+        <p>
+          <strong>Publishing.</strong> A plan under review is visible to planners only. <em>Publish plan</em> makes everyone's own trips visible in <em>My plan</em>;
+          from then on the plan is not generated again, and your changes are marked "after publication" in the history of a trip.
+        </p>
         <p>The plan uses working days only (Monday to Friday) and does not know public holidays yet.</p>
       </details>
 
@@ -132,6 +146,28 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
           </div>
           {!adding && <button onClick={() => setAdding(true)}>Add a trip</button>}
         </div>
+        {canGenerate && summary && summary.totals.trips > 0 && (
+          <p className="row">
+            {summary.status === "review" && (
+              <button className="secondary" onClick={() => setStatus("published",
+                `Publish the ${year} plan? Everyone with a trip will see it in My plan, and the plan can no longer be generated again.`,
+                "The plan is published. People can now see their trips in My plan.")}>Publish plan</button>
+            )}
+            {summary.status === "published" && (
+              <>
+                <button className="secondary" onClick={() => setStatus("review",
+                  `Withdraw the publication? People will no longer see their trips in My plan until it is published again.`,
+                  "The publication was withdrawn.")}>Withdraw publication</button>
+                <button className="link" onClick={() => setStatus("closed",
+                  `Close the ${year} plan? It becomes read-only.`, "The plan year is closed.")}>Close the year</button>
+              </>
+            )}
+            {summary.published_at && summary.status !== "review" && (
+              <span className="muted">Published {new Date(summary.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+            )}
+          </p>
+        )}
+        {statusMsg && <p className={statusMsg.ok ? "good" : "problem"} role={statusMsg.ok ? "status" : "alert"}>{statusMsg.text}</p>}
         {error && <p className="problem">{error}</p>}
         {!summary && !error && <p>Loading…</p>}
         {summary && summary.totals.trips === 0 && (

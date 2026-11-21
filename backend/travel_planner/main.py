@@ -19,6 +19,7 @@ from .db import create_pool
 from .identity import SESSION_COOKIE, Identity, key_hash, make_session, resolve_identity
 from .migrate import apply_migrations
 from .routes_catalog import router as catalog_router
+from .routes_my import router as my_router
 from .routes_org import router as org_router
 from .routes_plan import router as plan_router
 from .routes_users import router as users_router
@@ -52,6 +53,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(catalog_router)
     app.include_router(plan_router)
     app.include_router(users_router)
+    app.include_router(my_router)
 
     @app.exception_handler(RequestValidationError)
     async def friendly_validation_error(_: Request, exc: RequestValidationError):

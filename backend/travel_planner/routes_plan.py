@@ -7,7 +7,10 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
 
 from . import plan_store as store
 from . import trip_edit as edit
@@ -66,6 +69,16 @@ def generate(year: int, request: Request, commit: bool = Query(default=False),
              who: Identity = Depends(planner)) -> dict:
     """Preview (default) or save the generated plan. Untouched generated trips are replaced; edited ones stay."""
     return _db(request, store.generate_plan, year, commit, who.person_id, commit=commit)
+
+
+class StatusBody(BaseModel):
+    status: Literal["published", "review", "closed"]
+
+
+@router.post("/admin/plan/{year}/status")
+def plan_status(year: int, body: StatusBody, request: Request, who: Identity = Depends(planner)) -> dict:
+    """Publish the plan (supervisors can then see their trips), withdraw it, or close the year."""
+    return _db(request, store.set_plan_status, year, body.status, who.person_id, commit=True)
 
 
 @router.get("/plan/{year}/warnings")

@@ -17,6 +17,10 @@ Draft ──generate──▶ Review ──publish──▶ Published ──clos
 
 The first plan year is **2027**. Source: "Use travel plans submitted with the annual budget as the baseline reference."
 
+**Publishing.** Administrators and national planners publish a reviewed plan (**Plan → Publish plan**, asks for confirmation). From then on everybody sees their own trips in
+[My plan](02-users-roles-access.md#24-views-per-role) and the plan cannot be generated again; manual changes remain possible and are marked "after publication". The publication can be
+withdrawn (back to review) and the year can be closed (read-only). A plan without trips cannot be published; a draft must be generated first. Every status change is in the audit log.
+
 ## 5.2 Generating the plan
 
 Implemented in `backend/travel_planner/plan_engine.py` (pure logic, no database) and `plan_store.py` (loading and saving).

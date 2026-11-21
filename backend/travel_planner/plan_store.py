@@ -194,7 +194,7 @@ def _scope_sql(allowed: set[int] | None, column: str = "t.visited_org_unit_id") 
 
 
 def plan_summary(conn: Connection, year: int, allowed: set[int] | None = None) -> dict[str, Any]:
-    py = conn.execute("SELECT year, status FROM plan_year WHERE year = %s", (year,)).fetchone()
+    py = conn.execute("SELECT year, status, published_at FROM plan_year WHERE year = %s", (year,)).fetchone()
     if py is None:
         raise CatalogError(f"The plan year {year} does not exist.", 404)
     units = {u["id"]: u for u in conn.execute("SELECT id, kind, name, parent_id FROM org_unit WHERE active")}
@@ -232,7 +232,8 @@ def plan_summary(conn: Connection, year: int, allowed: set[int] | None = None) -
         "count(*) FILTER (WHERE t.status = 'cancelled' AND t.merged_into_trip_id IS NOT NULL) AS merged, "
         "count(*) FILTER (WHERE t.source = 'manual' AND t.status <> 'cancelled') AS manual "
         f"FROM trip t WHERE t.plan_year = %s AND {scope}", (year, *scope_args)).fetchone()  # noqa: S608
-    return {"year": year, "status": py["status"], "regions": out_regions,
+    return {"year": year, "status": py["status"],
+            "published_at": py["published_at"].isoformat() if py["published_at"] else None, "regions": out_regions,
             "nationwide": {"unit_id": None, "label": "Nationwide events", "months": nationwide},
             "totals": dict(totals), "can_edit_all": allowed is None}
 
@@ -324,6 +325,29 @@ def plan_people(conn: Connection, allowed: set[int] | None, q: str | None, limit
         f"WHERE {' AND '.join(clauses)} ORDER BY pos.level, p.full_name LIMIT %s", (*args, limit)).fetchall()  # noqa: S608
 
 
+_TRANSITIONS = {("review", "published"), ("published", "review"), ("published", "closed")}
+
+
+def set_plan_status(conn: Connection, year: int, to: str, actor: int | None) -> dict[str, Any]:
+    """Publish a reviewed plan, withdraw it, or close the year. Supervisors see a plan once it is published."""
+    row = conn.execute("SELECT status FROM plan_year WHERE year = %s FOR UPDATE", (year,)).fetchone()
+    if row is None:
+        raise CatalogError(f"The plan year {year} does not exist.", 404)
+    if row["status"] == "draft" and to == "published":
+        raise CatalogError("Generate the plan first.", 409)
+    if (row["status"], to) not in _TRANSITIONS:
+        raise CatalogError(f"A plan that is {row['status']} cannot become {to}.", 409)
+    if to == "published" and not conn.execute(
+            "SELECT 1 FROM trip WHERE plan_year = %s AND status <> 'cancelled' LIMIT 1", (year,)).fetchone():
+        raise CatalogError("The plan has no trips yet.", 409)
+    conn.execute(
+        "UPDATE plan_year SET status = %s, published_at = CASE WHEN %s = 'published' THEN now() ELSE published_at END, "
+        "published_by = CASE WHEN %s = 'published' THEN %s ELSE published_by END WHERE year = %s",
+        (to, to, to, actor, year))
+    audit(conn, actor, "plan.status", "plan_year", year, {"from": row["status"], "to": to})
+    return {"year": year, "status": to}
+
+
 def plan_warnings(conn: Connection, year: int) -> dict[str, Any]:
     inp = load_inputs(conn, year)
     views = load_trip_views(conn, year)
@@ -332,4 +356,5 @@ def plan_warnings(conn: Connection, year: int) -> dict[str, Any]:
     return {"year": year, "total": len(warns), "counts": dict(counts), "warnings": [w.__dict__ for w in warns[:200]]}
 
 
-__all__ = ["generate_plan", "plan_summary", "plan_trips", "trip_detail", "trip_history", "plan_people", "plan_warnings"]
+__all__ = ["generate_plan", "plan_summary", "plan_trips", "trip_detail", "trip_history", "plan_people",
+           "plan_warnings", "set_plan_status"]

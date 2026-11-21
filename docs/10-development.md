@@ -85,6 +85,14 @@ Under `/api/admin/users` (administrators only):
 To become the first administrator without a person record: `IDENTITY_KEY=... python tools/hash_email.py` and put the printed hash into `BOOTSTRAP_ADMIN_HASHES`.
 Once real administrators have a linked sign-in and the role, remove that setting.
 
+## 10.3e My plan and publishing (API)
+
+| Call | Who | Purpose |
+|------|-----|---------|
+| `GET /api/my/trips?year=` | any signed-in person with a role | The caller's own trips with role, status, original dates, last change and participants. Empty until the plan is published (planners see theirs earlier) |
+| `GET /api/my/trips.ics?year=` | the same | iCalendar file of the caller's trips (cancelled trips are left out; 404 until published) |
+| `POST /api/admin/plan/{year}/status` `{status}` | administrators, national planners | `published` (from review), `review` (withdraw), `closed` (from published) |
+
 ## 10.4 Configuration
 
 | Variable | Used in | Meaning |
