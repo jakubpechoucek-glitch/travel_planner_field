@@ -6,6 +6,7 @@ import Org from "./Org";
 import Users from "./Users";
 import Plan from "./Plan";
 import Home, { Tab } from "./Home";
+import Guide from "./Guide";
 import { Icon, Logo } from "./icons";
 import { initials, ROLE_LABEL } from "./theme";
 
@@ -96,9 +97,10 @@ export default function App() {
     { id: "catalog", label: "Events and rules", icon: "sliders", show: true },
     { id: "org", label: "Organization", icon: "org", show: canSeeOrg },
     { id: "users", label: "Users", icon: "users", show: isAdmin },
+    { id: "guide", label: "User guide", icon: "help", show: true },
   ];
   const titles: Record<Tab, string> = {
-    home: "Home", myplan: "My plan", plan: "Plan 2027", costs: "Cost estimate", catalog: "Events and rules", org: "Organization", users: "Users",
+    home: "Home", myplan: "My plan", plan: "Plan 2027", costs: "Cost estimate", catalog: "Events and rules", org: "Organization", users: "Users", guide: "User guide",
   };
 
   return (
@@ -135,6 +137,7 @@ export default function App() {
           {canSeeOrg && tab === "org" && <Org isAdmin={isAdmin} />}
           {isAdmin && tab === "users" && <Users myId={me.person_id} />}
           {canSeePlan && tab === "plan" && <Plan canGenerate={canSeeOrg} />}
+          {tab === "guide" && <Guide roles={me.roles} />}
         </div>
       </main>
     </div>

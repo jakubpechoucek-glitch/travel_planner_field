@@ -124,6 +124,10 @@ The interface uses one design system in `frontend/src/styles.css` (tokens for li
 - **Charts** (`frontend/src/charts.tsx`): columns, ranked bars, paired bars (budget against estimate), a segmented bar, meters, sparklines and a progress ring, all with tooltips and text alternatives. Status colors always come with an icon and a label.
 - `GET /api/my/trips` also returns `event_code` per trip.
 
+## 10.3i User guide in the application
+
+Every signed-in user can open **User guide** in the sidebar. The text is a single Markdown file, `frontend/src/guide/user-guide.md` (screenshots next to it as `.jpg`), rendered by `frontend/src/Guide.tsx` with a table of contents, a "Go to my chapter" shortcut for the user's role, and print or save as PDF. It lives under `frontend/` so that the container build includes it. Supported Markdown: headings (`#`, `##`, `###`), paragraphs, bullet and numbered lists, pipe tables, `**bold**`, `*italic*`, `code`, images `![caption](name)` (file `name.jpg` in the same folder) and notes `> **Tip** text` or `> **Note** text`. Update the guide in the same change as a feature that users can see; screenshots must use fictitious data only.
+
 ## 10.4 Configuration
 
 | Variable | Used in | Meaning |

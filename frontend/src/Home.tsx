@@ -5,7 +5,7 @@ import { Ring, Sparkline } from "./charts";
 import { money } from "./money";
 import { daysFromToday, familyOf, ROLE_LABEL } from "./theme";
 
-export type Tab = "home" | "myplan" | "org" | "catalog" | "plan" | "costs" | "users";
+export type Tab = "home" | "myplan" | "org" | "catalog" | "plan" | "costs" | "users" | "guide";
 type Me = { name: string | null; roles: string[]; person_id: number | null };
 type MyTrips = { linked: boolean; published: boolean; year: number | null; trips: { id: number; title: string; event_code?: string; place: string | null; status: string; start_date: string; end_date: string }[] };
 type Summary = { status: string; totals: { trips: number; merged: number; manual: number }; regions: { rows: { months: number[] }[] }[]; nationwide: { months: number[] } };
@@ -160,6 +160,7 @@ export default function Home({ me, go, canSeePlan, canSeeCosts, canSeeOrg, isAdm
         {canSeePlan && <button onClick={() => go("plan")}><Icon name="send" /><b>Plan {year}</b><span>Timeline, heatmap and changes</span></button>}
         {canSeeCosts && <button onClick={() => go("costs")}><Icon name="chart" /><b>Costs</b><span>Estimate against budget</span></button>}
         <button onClick={() => go("catalog")}><Icon name="sliders" /><b>Events and rules</b><span>What is planned and why</span></button>
+        <button onClick={() => go("guide")}><Icon name="help" /><b>User guide</b><span>How every page works, by role</span></button>
       </div>
     </div>
   );

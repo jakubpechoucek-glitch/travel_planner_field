@@ -46,6 +46,7 @@ early, combine it, and keep control of spend.
 | 8 | [MVP and roadmap](docs/08-mvp-roadmap.md) | Phased delivery plan |
 | 9 | [Open questions and data issues](docs/09-open-questions.md) | What must be decided or cleaned before building |
 | 10 | [Development guide](docs/10-development.md) | Local setup, tests, configuration, migrations, deployment |
+| – | [User guide](frontend/src/guide/user-guide.md) | How every page works, by role (also shown in the app under *User guide*) |
 
 ## Source material
 

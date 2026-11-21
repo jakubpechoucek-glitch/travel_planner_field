@@ -483,3 +483,35 @@ ul.mytrips { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; 
   .tl-bar, .stick, .fill, .bar, .block { forced-color-adjust: none; border: 1px solid CanvasText; }
 }
 .brand div { white-space: nowrap; }
+
+/* ------------------------------------------------------------------------------------------ user guide */
+
+.guide { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 28px; align-items: start; }
+.guide-toc { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; padding: 14px 14px 14px 4px; }
+.guide-toc ul { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 2px; }
+.guide-toc a { display: block; padding: 5px 10px; border-radius: 8px; color: var(--ink-2); text-decoration: none; font-size: 13.5px; }
+.guide-toc a:hover { background: var(--brand-soft); color: var(--brand-strong); }
+.guide-toc li.l1 a { font-weight: 700; color: var(--ink); margin-top: 8px; }
+.guide-toc li.l2 a { padding-left: 20px; }
+.toc-mine { width: 100%; display: inline-flex; gap: 8px; align-items: center; justify-content: center; }
+.guide-body { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 34px 34px; box-shadow: var(--shadow-1); min-width: 0; }
+.guide-body h2.g1 { font-size: 24px; margin-top: 36px; padding-bottom: 8px; border-bottom: 2px solid var(--line); scroll-margin-top: 16px; }
+.guide-body h3.g2 { font-size: 19px; color: var(--brand-strong); margin-top: 28px; scroll-margin-top: 16px; }
+.guide-body h4.g3 { font-size: 15.5px; margin-top: 20px; }
+.guide-body ul, .guide-body ol { padding-left: 24px; margin: 8px 0 12px; }
+.guide-body li { margin: 4px 0; }
+.guide-body code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; font-size: .9em; }
+.guide-body figure { margin: 18px 0; text-align: center; }
+.guide-body figure img { max-width: 100%; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-1); }
+.guide-body figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; font-style: italic; }
+.gnote { margin: 12px 0; padding: 10px 14px; border-radius: 10px; border-left: 4px solid var(--brand); background: var(--brand-soft); }
+.gnote.note { border-left-color: var(--warn); background: var(--warn-soft); }
+.guide-table td, .guide-table th { font-size: 14px; }
+@media (max-width: 1000px) { .guide { grid-template-columns: 1fr; } .guide-toc { position: static; max-height: none; } .guide-body { padding: 4px 18px 24px; } }
+@media print {
+  .side, .no-print, .page-head { display: none !important; }
+  .app { display: block; } .content { padding: 0; }
+  .guide { display: block; } .guide-body { border: 0; box-shadow: none; padding: 0; }
+  .guide-body h2.g1 { break-before: page; } .guide-body figure, .guide-table tr { break-inside: avoid; }
+  body { background: #fff; }
+}
