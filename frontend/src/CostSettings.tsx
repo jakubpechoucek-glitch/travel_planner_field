@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { api } from "./api";
+import { money, PESO } from "./money";
 
 type Rate = { id: number; rate_kind: string; mode: string | null; position_id: number | null; position: string | null; amount: number; currency: string; valid_from: string; valid_to: string | null; note: string | null };
 type Region = { id: number; name: string; code: string };
@@ -13,7 +14,6 @@ type BudgetLine = { id: number; event_name: string; position_name: string | null
 type Events = { id: number; name: string }[];
 
 const KIND: Record<string, string> = { airfare: "Air fare (round trip)", sea_fare: "Sea fare", land_transport: "Land transport", lodging_per_night: "Hotel per night", per_diem: "Per diem per day", local_transport: "Local transport per trip", other: "Other" };
-const money = (n: number) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 0 }).format(n);
 
 export default function CostSettings({ year, isAdmin, onChanged }: { year: number; isAdmin: boolean; onChanged: () => void }) {
   const [cfg, setCfg] = useState<Config | null>(null);
@@ -37,7 +37,7 @@ export default function CostSettings({ year, isAdmin, onChanged }: { year: numbe
       {msg && <p className={msg.ok ? "good" : "problem"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
 
       <h4>Rates</h4>
-      <p className="muted">Amounts in pesos. A rate for a position beats the general one. A new rate from a date ends the one it replaces; earlier trips keep the old price.</p>
+      <p className="muted">All amounts are in Philippine pesos (₱). A rate for a position beats the general one. A new rate from a date ends the one it replaces; earlier trips keep the old price.</p>
       <div className="heatwrap">
         <table className="trips money">
           <thead><tr><th>Cost</th><th>Mode</th><th>Position</th><th>Amount</th><th>From</th><th>Until</th><th></th></tr></thead>
@@ -127,7 +127,7 @@ function RateForm({ cfg, onSave }: { cfg: Config; onSave: (b: unknown) => Promis
         <label>Position<select value={f.position_id} onChange={(e) => setF({ ...f, position_id: e.target.value })}><option value="">Everybody</option>{cfg.positions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
       </div>
       <div className="row">
-        <label>Amount (₱)<input required type="number" min={0} step="1" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></label>
+        <label>Amount ({PESO})<input required type="number" min={0} step="1" value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></label>
         <label>Valid from<input required type="date" value={f.valid_from} onChange={(e) => setF({ ...f, valid_from: e.target.value })} /></label>
         <label>Note<input maxLength={200} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
       </div>

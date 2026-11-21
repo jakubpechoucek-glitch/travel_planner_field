@@ -209,6 +209,8 @@ def test_the_cost_estimate_is_in_the_file_only_for_roles_that_may_see_costs(plan
     cost = sum(t[h["Estimated cost (PHP)"]] or 0 for t in trips)
     f = plan.get("/api/cost/2027/forecast", headers=ADMIN).json()["totals"]["cost"]
     assert abs(cost - f) < 1                                                    # the file agrees with the Costs page
+    first = wb["Trips"].cell(2, h["Estimated cost (PHP)"] + 1)
+    assert "\u20b1" in first.number_format                                       # Excel shows the peso sign
     ws = wb["Summary"]
     start = next(i for i, r in enumerate(ws.iter_rows(values_only=True)) if r[0] == "Event") + 1
     events = [r for r in list(ws.iter_rows(values_only=True))[start:] if r[0]]

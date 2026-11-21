@@ -119,7 +119,7 @@ Migration `0006_costs.sql` adds the cost model (the existing `cost_rate` table h
 
 | Table | Purpose |
 |-------|---------|
-| `cost_rate` | Air fare, sea fare, hotel per night, per diem and local transport by mode and position, with valid-from and valid-to dates |
+| `cost_rate` | Air fare, sea fare, hotel per night, per diem and local transport by mode and position, with valid-from and valid-to dates. Amounts are Philippine pesos; the `currency` column can only be `PHP` (migration `0007_single_currency.sql`) |
 | `travel_mode` | How people travel from one region to another (land, air, sea) |
 | `travel_mode_override` | A place that needs another mode, from anywhere or from one region |
 | `app_setting` | Where the Head of Field is based and where nationwide events are held |

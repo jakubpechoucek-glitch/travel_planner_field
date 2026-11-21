@@ -59,6 +59,7 @@ The design is derived from four documents provided by the business:
 These files contain personal data (names, phone numbers, e-mail addresses) and are
 **not stored in this repository**.
 
-## Language
+## Language and currency
 
 All user-facing text, in-app help and documentation are written in **American English**.
+All amounts are in **Philippine pesos (PHP, ₱)**; the application has a single currency.

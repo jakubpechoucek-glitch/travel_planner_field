@@ -234,3 +234,17 @@ def test_changes_are_in_the_audit_log(plan):
     plan.put("/api/admin/cost/booking-tiers", headers=ADMIN, json={"tiers": [{"min_days_ahead": 30, "factor": 0.9}]})
     actions = {r[0] for r in q("SELECT action FROM travel.audit_log WHERE action LIKE 'cost.%%'")}
     assert {"cost.mode.suggest", "cost.tiers"} <= actions
+
+
+def test_everything_is_in_philippine_pesos(plan):
+    cfg = plan.get("/api/cost/config", headers=ADMIN).json()
+    f = forecast(plan)
+    assert cfg["currency"] == f["currency"] == "PHP" and cfg["currency_symbol"] == f["currency_symbol"] == "\u20b1"
+    assert {r["currency"] for r in cfg["rates"]} == {"PHP"}
+    # the database refuses any other currency ...
+    with pytest.raises(psycopg.errors.CheckViolation):
+        q("INSERT INTO travel.cost_rate(rate_kind, amount, currency, valid_from) VALUES ('per_diem', 1, 'USD', '2030-01-01')")
+    # ... and so does the API: a currency field is refused, not silently ignored
+    body = {"rate_kind": "per_diem", "amount": 700, "valid_from": "2030-01-01"}
+    assert plan.post("/api/admin/cost/rates", headers=ADMIN, json={**body, "currency": "USD"}).status_code == 422
+    assert plan.post("/api/admin/cost/rates", headers=ADMIN, json=body).status_code == 201

@@ -148,6 +148,9 @@ approval states are included in the model so Phase 2 does not need a migration o
 Implemented in `backend/travel_planner/cost_engine.py` (pure logic), `cost_store.py` (database) and the **Costs** page. Visible to administrators, national planners and regional planners
 (for their own region); administrators maintain the rates.
 
+**Currency.** Every amount in the application is in **Philippine pesos (PHP, ₱)**. There is no second currency and no conversion; the database refuses any other currency code and the API refuses a currency field on a rate.
+Excel shows amounts with the peso sign.
+
 **The model is the budget's own formula.** For every person who *travels* on a planned trip (hosts, who are visited, cost nothing):
 
 > cost = fare (air or sea, only if the person has to fly or sail) + local transport + nights × hotel per night + days × per diem

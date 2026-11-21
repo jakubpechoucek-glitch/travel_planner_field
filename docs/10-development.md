@@ -165,6 +165,7 @@ one web service built from the `Dockerfile`, plus a managed PostgreSQL 16 databa
 ## 10.8 Conventions
 
 - American English in code, comments, UI text and documentation.
+- Money: one currency, the Philippine peso (PHP, ₱). Use `backend/travel_planner/currency.py` and `frontend/src/money.ts`; never hard-code another symbol or format.
 - No e-mail addresses or phone numbers in the database, logs, test data or repository. Use `@example.test` addresses in tests.
 - Backend: type hints, `ruff` clean. Frontend: TypeScript `strict`.
 - One pull request per feature; documentation and in-app help updated in the same change.

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
 import CostSettings from "./CostSettings";
+import { money, signed } from "./money";
 
 type Row = { cost: number; trips: number; person_trips: number };
 type Forecast = {
-  year: number; currency: string;
+  year: number; currency: string; currency_symbol: string;
   totals: { cost: number; trips: number; person_trips: number; avg_per_person_trip: number; air_or_sea_person_trips: number };
   by_month: { month: string; cost: number; trips: number }[];
   by_place: (Row & { place: string })[];
@@ -19,8 +20,6 @@ type Forecast = {
   assumptions: { missing_rates: string[]; assumed_mode_person_trips: number; modes_loaded: boolean; settings: Record<string, number | null>; tiers: { min_days_ahead: number; factor: number }[] };
 };
 
-const money = (n: number) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 0 }).format(n);
-const signed = (n: number) => (n > 0 ? "+" : n < 0 ? "−" : "") + money(Math.abs(n));
 const compact = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(Math.round(n)));
 
 export default function Costs({ isAdmin, whole }: { isAdmin: boolean; whole: boolean }) {
@@ -55,7 +54,10 @@ export default function Costs({ isAdmin, whole }: { isAdmin: boolean; whole: boo
           Whether someone flies depends on where they are based and where the trip takes place (see <em>Travel modes</em> below). Hosts, who are visited, have no travel cost.
           <strong> Early booking</strong> shows what cheaper fares would save, once the travel desk has told us the discounts.
         </p>
-        <p>This is an <strong>estimate for planning</strong>, not a booking and not an approval. Hotel, per diem and fare rates are set by the company; they are shown under Rates.</p>
+        <p>
+          This is an <strong>estimate for planning</strong>, not a booking and not an approval. Hotel, per diem and fare rates are set by the company; they are shown under Rates.
+          All amounts are in <strong>Philippine pesos (₱)</strong>.
+        </p>
       </details>
 
       <section className="card">

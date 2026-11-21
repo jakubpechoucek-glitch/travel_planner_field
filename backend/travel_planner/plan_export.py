@@ -26,6 +26,7 @@ from psycopg import Connection
 
 from . import plan_store as store
 from .catalog import CatalogError, audit
+from .currency import EXCEL_FORMAT
 
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 STATUS = {"generated": "Proposed", "planned": "Confirmed", "requested": "Requested", "approved": "Approved",
@@ -224,7 +225,7 @@ def build(conn: Connection, year: int, allowed: set[int] | None, *, include_canc
         row += 1
         put(ws, row, [name, "", n, m, d, *([round((event_costs or {}).get(name, 0.0))] if costs is not None else [])])
         if costs is not None:
-            ws.cell(row, 6).number_format = "#,##0"
+            ws.cell(row, 6).number_format = EXCEL_FORMAT
     for c, w in enumerate([34, 32, *([11] * 12), 9], 1):
         ws.column_dimensions[get_column_letter(c)].width = w
     for r in range(first_data, first_data + len(cells) + 1):  # zeros stay blank so the busy months stand out
@@ -266,7 +267,7 @@ def build(conn: Connection, year: int, allowed: set[int] | None, *, include_canc
           wrap={22, 23, 24})
     if costs is not None:
         for r in range(2, len(rows) + 2):
-            ws.cell(r, 25).number_format = "#,##0"
+            ws.cell(r, 25).number_format = EXCEL_FORMAT
 
     # ----- People on trips
     ws = wb.create_sheet("People on trips")

@@ -9,11 +9,12 @@ from pathlib import Path
 from typing import Any, Literal
 
 from psycopg import Connection
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from . import cost_engine as ce
 from .budget_import import parse_budget
 from .catalog import CatalogError, audit
+from .currency import CURRENCY, SYMBOL
 from .plan_store import _scope_sql
 
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -27,6 +28,8 @@ LUZON = ("NCR", "NORTH-LUZON", "SOUTH-LUZON")
 
 
 class RateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")  # a rate is always in pesos: a "currency" field is refused, not ignored
+
     rate_kind: RateKind
     mode: Mode | None = None
     position_id: int | None = None
@@ -94,6 +97,7 @@ def config(conn: Connection) -> dict[str, Any]:
     regions = conn.execute(
         "SELECT id, name, code FROM org_unit WHERE kind = 'region' AND active ORDER BY name").fetchall()
     return {
+        "currency": CURRENCY, "currency_symbol": SYMBOL,
         "rates": rates, "regions": regions,
         "modes": conn.execute("SELECT from_region_id, to_region_id, mode FROM travel_mode").fetchall(),
         "overrides": conn.execute(
@@ -282,7 +286,7 @@ def forecast_report(conn: Connection, year: int, allowed: set[int] | None, book_
     budget = _budget_comparison(conn, year, by_event, events) if allowed is None else None
     air = sum(by_mode[m]["person_trips"] for m in ("air", "sea") if m in by_mode)
     out: dict[str, Any] = {
-        "year": year, "today": str(today), "currency": "PHP",
+        "year": year, "today": str(today), "currency": CURRENCY, "currency_symbol": SYMBOL,
         "totals": {"cost": round(total, 2), "trips": len(trips), "person_trips": len(lines),
                    "avg_per_person_trip": round(total / len(lines), 2) if lines else 0.0,
                    "air_or_sea_person_trips": air},
