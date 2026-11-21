@@ -9,6 +9,7 @@ import Home, { Tab } from "./Home";
 import Guide from "./Guide";
 import { Icon, Logo } from "./icons";
 import { initials, ROLE_LABEL } from "./theme";
+import { api } from "./api";
 
 type Me = { signed_in: boolean; linked: boolean; has_access: boolean; name: string | null; roles: string[]; person_id: number | null };
 type State =
@@ -20,6 +21,8 @@ type State =
 export default function App() {
   const [state, setState] = useState<State>({ kind: "loading" });
   const [tab, setTab] = useState<Tab>("home");
+  const [years, setYears] = useState<{ year: number; status: string; trips: number }[]>([]);
+  const [year, setYear] = useState(2027);
 
   const load = useCallback(async () => {
     try {
@@ -49,6 +52,14 @@ export default function App() {
     const planner = state.me.roles.some((r) => ["administrator", "national_planner", "regional_planner", "area_planner"].includes(r));
     if (!planner) setTab("myplan");   // supervisors land on their own plan
   }, [state]);
+
+  const loadYears = useCallback(async () => {
+    const r = await api<{ year: number; status: string; trips: number }[]>("/api/plan-years");
+    if (r.ok && r.data.length) { setYears(r.data); setYear((y) => (r.data.some((x) => x.year === y) ? y : r.data[0].year)); }
+  }, []);
+  useEffect(() => {
+    if (state.kind === "ready" && state.me.has_access) void loadYears();
+  }, [state, loadYears]);
 
   const signOut = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -100,7 +111,7 @@ export default function App() {
     { id: "guide", label: "User guide", icon: "help", show: true },
   ];
   const titles: Record<Tab, string> = {
-    home: "Home", myplan: "My plan", plan: "Plan 2027", costs: "Cost estimate", catalog: "Events and rules", org: "Organization", users: "Users", guide: "User guide",
+    home: "Home", myplan: "My plan", plan: "Plan", costs: "Cost estimate", catalog: "Events and rules", org: "Organization", users: "Users", guide: "User guide",
   };
 
   return (
@@ -126,17 +137,26 @@ export default function App() {
         </div>
       </aside>
       <main className="content" key={tab}>
+        {(tab === "home" || tab === "plan" || tab === "costs") && years.length > 1 && (
+          <div className="page-head no-print" style={{ justifyContent: "flex-end", marginBottom: 8 }}>
+            <label className="row" style={{ gap: 8, alignItems: "center", fontWeight: 600 }}>Plan year
+              <select value={year} onChange={(e) => setYear(Number(e.target.value))} aria-label="Plan year">
+                {years.map((y) => <option key={y.year} value={y.year}>{y.year}{y.status === "published" ? " · published" : y.status === "closed" ? " · closed" : ""}</option>)}
+              </select>
+            </label>
+          </div>
+        )}
         {tab !== "home" && (
-          <div className="page-head"><div><h1>{titles[tab]}</h1></div></div>
+          <div className="page-head"><div><h1>{titles[tab]}{tab === "plan" || tab === "costs" ? ` ${year}` : ""}</h1></div></div>
         )}
         <div className="page">
-          {tab === "home" && <Home me={me} go={setTab} canSeePlan={canSeePlan} canSeeCosts={canSeeCosts} canSeeOrg={canSeeOrg} isAdmin={isAdmin} />}
+          {tab === "home" && <Home year={year} me={me} go={setTab} canSeePlan={canSeePlan} canSeeCosts={canSeeCosts} canSeeOrg={canSeeOrg} isAdmin={isAdmin} />}
           {hasPerson && tab === "myplan" && <MyPlan />}
-          {canSeeCosts && tab === "costs" && <Costs isAdmin={isAdmin} whole={canSeeOrg} />}
+          {canSeeCosts && tab === "costs" && <Costs year={year} isAdmin={isAdmin} whole={canSeeOrg} />}
           {tab === "catalog" && <Catalog isAdmin={isAdmin} />}
           {canSeeOrg && tab === "org" && <Org isAdmin={isAdmin} />}
           {isAdmin && tab === "users" && <Users myId={me.person_id} />}
-          {canSeePlan && tab === "plan" && <Plan canGenerate={canSeeOrg} />}
+          {canSeePlan && tab === "plan" && <Plan year={year} years={years} canGenerate={canSeeOrg} onYears={loadYears} onYear={setYear} />}
           {tab === "guide" && <Guide roles={me.roles} />}
         </div>
       </main>

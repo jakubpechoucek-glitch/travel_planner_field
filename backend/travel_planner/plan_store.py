@@ -79,7 +79,11 @@ def load_inputs(conn: Connection, year: int, replace: set[int] | None = None) ->
 
     pos_code = {r["id"]: r["code"] for r in conn.execute("SELECT id, code FROM position")}
     rules_by_event: dict[int | None, list[pe.ERule]] = defaultdict(list)
+    not_held: dict[int, str] = {}
     for r in conn.execute("SELECT * FROM rule WHERE active ORDER BY rule_key"):
+        if r["rule_type"] in ("annual_quota", "cadence") and not pe.held_in(r["params"] or {}, year):
+            not_held[r["event_type_id"]] = pe.schedule_phrase(r["params"])   # held in other years only
+            continue
         rules_by_event[r["event_type_id"]].append(pe.ERule(
             r["id"], r["rule_key"], r["rule_type"], r["scope_kind"], pos_code.get(r["position_id"]), r["period"],
             r["interval_n"], r["min_count"], r["max_count"], r["params"] or {}, r["severity"]))
@@ -106,8 +110,12 @@ def load_inputs(conn: Connection, year: int, replace: set[int] | None = None) ->
                                        frozenset(b["ids"]), b["caused_by_event_type_id"]))
     kept = [v for v in load_trip_views(conn, year, exclude=replace or set())
             if v.status != "cancelled" and not v.absorbed]
+    # an event that has a quota or cadence in force this year is held; one with only out-of-year rules is not
+    for e in events:
+        if any(r.rule_type in ("annual_quota", "cadence") for r in e.rules):
+            not_held.pop(e.id, None)
     return pe.Inputs(year, regions, clusters, offices, people, events, rules_by_event[None], merges, blackouts,
-                     positions, kept)
+                     positions, kept, not_held)
 
 
 def _save(conn: Connection, year: int, result: pe.Result, replace: set[int], actor: int | None) -> None:
@@ -348,6 +356,25 @@ def set_plan_status(conn: Connection, year: int, to: str, actor: int | None) -> 
         (to, to, to, actor, year))
     audit(conn, actor, "plan.status", "plan_year", year, {"from": row["status"], "to": to})
     return {"year": year, "status": to}
+
+
+def list_plan_years(conn: Connection) -> list[dict[str, Any]]:
+    rows = conn.execute(
+        "SELECT y.year, y.status, (SELECT count(*) FROM trip t WHERE t.plan_year = y.year AND t.status <> 'cancelled') "
+        "AS trips FROM plan_year y ORDER BY y.year").fetchall()
+    return [dict(r) for r in rows]
+
+
+def create_plan_year(conn: Connection, year: int, actor: int | None) -> dict[str, Any]:
+    """Open a new plan year as a draft (for example 2028). Events held every second year need the following years."""
+    last = conn.execute("SELECT max(year) AS y FROM plan_year").fetchone()["y"]
+    if conn.execute("SELECT 1 FROM plan_year WHERE year = %s", (year,)).fetchone():
+        raise CatalogError(f"The plan year {year} already exists.", 409)
+    if last is not None and year != last + 1:
+        raise CatalogError(f"The next plan year is {last + 1}.", 409)
+    conn.execute("INSERT INTO plan_year(year) VALUES (%s)", (year,))
+    audit(conn, actor, "plan.year.create", "plan_year", year, {})
+    return {"year": year, "status": "draft", "trips": 0}
 
 
 def plan_warnings(conn: Connection, year: int) -> dict[str, Any]:

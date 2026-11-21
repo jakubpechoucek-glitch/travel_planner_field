@@ -17,21 +17,20 @@ const greeting = () => {
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
 };
 
-export default function Home({ me, go, canSeePlan, canSeeCosts, canSeeOrg, isAdmin }: {
-  me: Me; go: (t: Tab) => void; canSeePlan: boolean; canSeeCosts: boolean; canSeeOrg: boolean; isAdmin: boolean;
+export default function Home({ year, me, go, canSeePlan, canSeeCosts, canSeeOrg, isAdmin }: {
+  year: number; me: Me; go: (t: Tab) => void; canSeePlan: boolean; canSeeCosts: boolean; canSeeOrg: boolean; isAdmin: boolean;
 }) {
-  const year = 2027;
   const [mine, setMine] = useState<MyTrips | null>(null);
   const [plan, setPlan] = useState<Summary | null>(null);
   const [warn, setWarn] = useState<Warnings | null>(null);
   const [cost, setCost] = useState<Forecast | null>(null);
 
   useEffect(() => {
-    if (me.person_id !== null) void api<MyTrips>("/api/my/trips").then((r) => r.ok && setMine(r.data));
+    if (me.person_id !== null) void api<MyTrips>(`/api/my/trips?year=${year}`).then((r) => r.ok && setMine(r.data));
     if (canSeePlan) void api<Summary>(`/api/plan/${year}/summary`).then((r) => r.ok && setPlan(r.data));
     if (canSeeOrg) void api<Warnings>(`/api/plan/${year}/warnings`).then((r) => r.ok && setWarn(r.data));
     if (canSeeCosts) void api<Forecast>(`/api/cost/${year}/forecast`).then((r) => r.ok && setCost(r.data));
-  }, [me.person_id, canSeePlan, canSeeOrg, canSeeCosts]);
+  }, [year, me.person_id, canSeePlan, canSeeOrg, canSeeCosts]);
 
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = (mine?.trips ?? []).filter((t) => t.status !== "cancelled" && t.end_date >= today).sort((a, b) => a.start_date.localeCompare(b.start_date));

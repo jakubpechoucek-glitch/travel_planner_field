@@ -43,8 +43,9 @@ const fmt = (a: string, b: string) => {
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 
-export default function Plan({ canGenerate }: { canGenerate: boolean }) {
-  const year = 2027;
+export default function Plan({ year, years, canGenerate, onYears, onYear }: {
+  year: number; years: { year: number; status: string }[]; canGenerate: boolean; onYears: () => Promise<void>; onYear: (y: number) => void;
+}) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sel, setSel] = useState<{ row: Row; month: number | null; nationwide: boolean } | null>(null);
@@ -64,10 +65,20 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
       const w = await fetch(`/api/plan/${year}/warnings`);
       if (w.ok) setWarnings((await w.json()) as WarningSet);
     }
-  }, [canGenerate]);
+  }, [canGenerate, year]);
   useEffect(() => {
+    setSummary(null); setSel(null); setOpenId(null); setWarnings(null); setError(null);
     void load();
   }, [load]);
+
+  const nextYear = years.length ? Math.max(...years.map((y) => y.year)) + 1 : year + 1;
+  const openYear = async () => {
+    if (!window.confirm(`Open the plan year ${nextYear}? It starts as an empty draft.`)) return;
+    const r = await api(`/api/admin/plan-years`, "POST", { year: nextYear });
+    if (!r.ok) return setError(r.error);
+    await onYears();
+    onYear(nextYear);
+  };
 
   useEffect(() => {
     if (!sel) return setTrips(null);
@@ -76,7 +87,7 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
     else if (sel.row.unit_id !== null) q.set("unit_id", String(sel.row.unit_id));
     if (sel.month) q.set("month", String(sel.month));
     void fetch(`/api/plan/${year}/trips?${q}`).then(async (r) => setTrips(r.ok ? ((await r.json()) as TripRow[]) : []));
-  }, [sel, tick]);
+  }, [sel, tick, year]);
 
   const [statusMsg, setStatusMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const setStatus = async (to: "published" | "review" | "closed", confirm: string, done: string) => {
@@ -125,6 +136,10 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
           right apply the same rules to the saved plan, so they also find problems after manual changes.
         </p>
         <p>
+          <strong>Plan years.</strong> Use the <em>Plan year</em> list at the top to switch years. <em>Open plan year</em> adds the next year as an empty draft. An event that is held only every
+          second year (set in Events and rules) is planned in its years only; in the other years the preview lists it as <em>not held in that year</em>.
+        </p>
+        <p>
           <strong>Changing a trip.</strong> Open a trip and choose <em>Change this trip</em>. Every change needs a reason, which everyone who sees the
           trip can read in its history. Before you save, the app shows which rules the change would break; a warning must be confirmed, and a rule
           marked <em>block</em> does not allow the change. Trips you changed or added are kept when the plan is generated again. You can change the
@@ -142,6 +157,10 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
       </details>
 
       {canGenerate && <Generate year={year} onApplied={load} />}
+      {canGenerate && year === Math.max(...years.map((y) => y.year), year) && (
+        <p className="no-print"><button type="button" className="secondary" onClick={openYear}><Icon name="plus" size={16} className="ico" />Open plan year {nextYear}</button>{" "}
+          <span className="muted">Needed for events that are held only every second year.</span></p>
+      )}
 
       <section className="card">
         <div className="head">

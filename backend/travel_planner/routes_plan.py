@@ -83,6 +83,21 @@ def plan_status(year: int, body: StatusBody, request: Request, who: Identity = D
     return _db(request, store.set_plan_status, year, body.status, who.person_id, commit=True)
 
 
+class YearBody(BaseModel):
+    year: int
+
+
+@router.get("/plan-years")
+def plan_years(request: Request, _: Identity = Depends(plan_access)) -> list[dict]:
+    return _db(request, store.list_plan_years)
+
+
+@router.post("/admin/plan-years", status_code=201)
+def new_plan_year(body: YearBody, request: Request, who: Identity = Depends(planner)) -> dict:
+    """Open the next plan year as a draft."""
+    return _db(request, store.create_plan_year, body.year, who.person_id, commit=True)
+
+
 @router.get("/plan/{year}/warnings")
 def warnings(year: int, request: Request, _: Identity = Depends(planner)) -> dict:
     return _db(request, store.plan_warnings, year)

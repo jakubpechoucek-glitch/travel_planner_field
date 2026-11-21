@@ -224,3 +224,12 @@ def test_equal_rank_events_are_not_combined_and_it_is_reported():
     res = generate(inp)
     assert not [t for t in res.trips if t.absorbed_into]
     assert any("neither is more important" in s for s in res.skipped)
+
+
+def test_rules_held_every_second_year():
+    from travel_planner.plan_engine import held_in, schedule_phrase
+
+    biennial = {"every_n_years": 2, "first_year": 2027}
+    assert [held_in(biennial, y) for y in (2026, 2027, 2028, 2029, 2030)] == [False, True, False, True, False]
+    assert held_in({}, 2028) and held_in({"every_n_years": 1, "first_year": 2027}, 2028)
+    assert schedule_phrase(biennial) == "every 2 years, starting in 2027" and schedule_phrase({}) == ""

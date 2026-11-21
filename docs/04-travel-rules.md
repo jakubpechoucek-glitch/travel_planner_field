@@ -74,6 +74,11 @@ Per-person caps and special rules:
 | **Satisfaction** | One event counts as another for quota purposes | The conference counts as the weekly Head–RM touchpoint that week |
 | **Concurrency cap** | At most *N* trips in the same unit/week (to avoid overload) | Maximum 2 area visits per week nationally *(to be confirmed)* |
 
+**Events that are not held every year.** A yearly quota or a cadence can carry a year schedule: *held every N years, first in year Y* (stored in the rule's `params` as `every_n_years` and `first_year`).
+With *every 2 years, first in 2027* the event is planned in 2027, 2029, 2031 and so on, and left out of 2028 and 2030 (the plan report says "not held in 2028"). The quota or cadence then describes
+one held year, and the quota checks are not applied in the other years. Use it for the biennial conference, or for an off-year strategic meeting by starting it one year later
+(for example every 2 years, first in 2028). A blackout period that belongs to such an event is simply defined only in the years it is held. Year schedules need the plan years to exist (see [Planning workflow](05-planning-workflow.md#51-lifecycle-of-a-plan-year)).
+
 Each rule has a **severity**: `block` (cannot be saved), `warn` (needs acknowledgment and a reason), or `info`.
 The transcript asks explicitly for a pop-up when a user exceeds a frequency limit, so the default for period
 and quota caps is `warn`; blackouts default to `warn` too, because the business wants flexibility with a
@@ -118,7 +123,7 @@ Everything is editable in the app (**Events and rules**, administrators only; ev
 - *Rules per event* and *limits for all events* (for example the number of trips per month for a position).
 - *Blackout periods* per plan year, for all events or selected ones.
 
-**Rule kinds in the editor:** yearly quota, cadence, preferred months, rotation, limit for a position (yearly limit), trip limit per person or
+**Rule kinds in the editor:** yearly quota, cadence (both with an optional *Which years* setting: every N years from a first year), preferred months, rotation, limit for a position (yearly limit), trip limit per person or
 position, and a limit on events at the same time. Each rule is shown as one readable sentence (for example "6 to 12 per year for each cluster.")
 and carries a **severity**: *Info* (a note), *Warn* (confirmation and a reason), *Block* (cannot be saved).
 

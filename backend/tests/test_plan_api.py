@@ -150,3 +150,27 @@ def test_errors_and_permissions(c):
     assert c.get("/api/plan/2027/summary", headers=stranger).status_code == 403
     assert c.get("/api/plan/2027/summary").status_code == 401
     assert c.get("/api/plan/trips/999999", headers=ADMIN).status_code == 404
+
+
+def test_event_held_every_second_year(org):
+    conf = [t for t in gen(org)["by_event"] if t["event"] == "Collection Conference"]
+    assert conf and conf[0]["trips"] == 1
+    body = {"event_type_id": q("SELECT id FROM travel.event_type WHERE code = 'CONF'")[0][0],
+            "rule_type": "annual_quota", "scope_kind": "nationwide", "min_count": 1, "max_count": 1,
+            "severity": "warn", "params": {"every_n_years": 2, "first_year": 2027}}
+    r = org.put("/api/admin/rules/CONF-QUOTA", headers=ADMIN, json=body)
+    assert r.status_code == 200, r.text
+    assert any(e["event"] == "Collection Conference" for e in gen(org)["by_event"])      # 2027: held
+    assert org.post("/api/admin/plan-years", headers=ADMIN, json={"year": 2029}).status_code == 409   # not the next
+    assert org.post("/api/admin/plan-years", headers=ADMIN, json={"year": 2027}).status_code == 409   # exists
+    assert org.post("/api/admin/plan-years", headers=ADMIN, json={"year": 2028}).status_code == 201
+    assert org.post("/api/admin/plan-years", headers=ADMIN, json={"year": 2029}).status_code == 201
+    assert [y["year"] for y in org.get("/api/plan-years", headers=ADMIN).json()] == [2027, 2028, 2029]
+    r = org.post("/api/admin/plan/2028/generate?commit=false", headers=ADMIN)
+    assert r.status_code == 200, r.text
+    report = r.json()
+    assert not any(e["event"] == "Collection Conference" for e in report["by_event"])    # 2028: not held
+    assert "Collection Conference: not held in 2028 (every 2 years, starting in 2027)." in report["skipped"]
+    assert not any("Conference" in w["message"] for w in report["warnings"])
+    assert any(e["event"] == "Collection Conference" for e in org.post(
+        "/api/admin/plan/2029/generate?commit=false", headers=ADMIN).json()["by_event"])   # 2029: held again

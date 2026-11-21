@@ -15,6 +15,10 @@ Draft ──generate──▶ Review ──publish──▶ Published ──clos
 | **Published** | Head of Field | The plan becomes the baseline; submitting travel requests is based on it. Edits remain possible but are flagged as *changes after publication* |
 | **Closed** | Administrator | The year is read-only; used for reporting |
 
+**Opening a plan year.** The first plan year is **2027**. Administrators and national planners open the next one with **Plan → Open plan year** (always the year after the last one, as an empty draft).
+The year selector at the top of Home, Plan and Costs switches between plan years. Events held only every second year (see [Travel rules](04-travel-rules.md#44-rule-types-the-application-must-support)) are planned only in their years;
+in the other years the generator lists them as *not held in that year* and raises no quota warning for them.
+
 The first plan year is **2027**. Source: "Use travel plans submitted with the annual budget as the baseline reference."
 
 **Publishing.** Administrators and national planners publish a reviewed plan (**Plan → Publish plan**, asks for confirmation). From then on everybody sees their own trips in

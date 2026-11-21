@@ -53,6 +53,13 @@ without a database for experiments; `backend/tests/test_plan_engine.py` shows ho
 curl -X POST "http://localhost:8000/api/admin/plan/2027/generate?commit=false"   # preview (nothing saved)
 ```
 
+| Endpoint | Who | Purpose |
+|----------|-----|---------|
+| `GET /api/plan-years` | any planner | The plan years with status and number of trips |
+| `POST /api/admin/plan-years` `{"year": 2028}` | administrator, national planner | Open the next plan year as a draft (it must be the year after the last one) |
+
+A rule is held every N years with `params.every_n_years` and `params.first_year` (quota and cadence rules only); the generator skips the event in the other years and reports it under *skipped*.
+
 ## 10.3c Changing trips (API)
 
 All under `/api/plan` and limited by role scope (`backend/travel_planner/access.py`):

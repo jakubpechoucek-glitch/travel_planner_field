@@ -56,6 +56,7 @@ cost_rate (Phase 2)        audit_log
 
 `rule.params` holds type-specific details that would otherwise need many nullable columns, for example
 `{"months": [11, 12, 1]}` for a preferred window or `{"distinct_units": true, "per_quarter": [4, 5]}` for rotation.
+A quota or cadence rule that is not held every year carries `{"every_n_years": 2, "first_year": 2027}`; no schema change was needed.
 The application validates `params` per `rule_type` (JSON schema) before saving.
 
 ### Plan and trips

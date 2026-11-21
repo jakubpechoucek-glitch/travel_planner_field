@@ -132,6 +132,11 @@ export default function Catalog({ isAdmin }: { isAdmin: boolean }) {
           Changing a rule creates a new version; earlier plans keep the rule they were built with.
         </p>
         <p>
+          <strong>Events that are not held every year.</strong> A yearly quota or cadence has a <em>Which years</em> setting. Enter <em>Held every 2 years</em> and the first year (for
+          example 2027) and the event is planned in 2027, 2029, 2031 and so on, and left out of the years in between. Starting a second event one year later (2028) gives it the off years.
+          Open the plan years you need with <em>Open plan year</em> on the Plan page.
+        </p>
+        <p>
           <strong>Blackout periods</strong> are dates when some events should not take place, for example the month of
           the conference. {isAdmin ? "" : "Only administrators can change the catalog."}
         </p>
@@ -286,6 +291,8 @@ function RuleForm({ rule, eventId, positions, onCancel, onSaved }: {
   const [max, setMax] = useState<number | "">(rule?.max_count ?? "");
   const [months, setMonths] = useState<number[]>((rule?.params.months as number[]) ?? []);
   const [unit, setUnit] = useState((rule?.params.unit as string) ?? "cluster");
+  const [every, setEvery] = useState<number | "">((rule?.params.every_n_years as number) ?? 1);
+  const [firstYear, setFirstYear] = useState<number | "">((rule?.params.first_year as number) ?? "");
   const [severity, setSeverity] = useState<Severity>(rule?.severity ?? "warn");
   const [note, setNote] = useState(rule?.description ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -311,7 +318,8 @@ function RuleForm({ rule, eventId, positions, onCancel, onSaved }: {
       interval_n: type === "cadence" ? toNum(interval) : null,
       min_count: type === "cadence" || type === "preferred_window" ? null : toNum(min),
       max_count: type === "cadence" || type === "preferred_window" ? null : toNum(max),
-      params: type === "preferred_window" ? { months } : type === "rotation" ? { unit } : {},
+      params: type === "preferred_window" ? { months } : type === "rotation" ? { unit }
+        : (type === "annual_quota" || type === "cadence") && Number(every) >= 2 ? { every_n_years: Number(every), first_year: toNum(firstYear) } : {},
       severity,
       description: note || null,
     };
@@ -363,6 +371,20 @@ function RuleForm({ rule, eventId, positions, onCancel, onSaved }: {
           <label>Minimum<input {...num(min, setMin)} /></label>
           <label>Maximum<input {...num(max, setMax)} /></label>
         </div>
+      )}
+      {(type === "annual_quota" || type === "cadence") && (
+        <fieldset>
+          <legend>Which years</legend>
+          <div className="row">
+            <label>Held every … years<input type="number" min={1} max={10} value={every}
+              onChange={(e) => setEvery(e.target.value === "" ? "" : Number(e.target.value))} /></label>
+            {Number(every) >= 2 && (
+              <label>First year<input type="number" min={2000} max={2100} required value={firstYear} placeholder="2027"
+                onChange={(e) => setFirstYear(e.target.value === "" ? "" : Number(e.target.value))} /></label>
+            )}
+          </div>
+          <p className="muted">1 means every year. With 2, the event is planned only in the first year and every second year after it (for example 2027, 2029, 2031); in the other years it is left out of the plan.</p>
+        </fieldset>
       )}
       {type === "rotation" && (
         <label>Rotate through

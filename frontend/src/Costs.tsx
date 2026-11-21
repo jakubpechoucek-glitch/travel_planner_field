@@ -22,8 +22,7 @@ type Forecast = {
   assumptions: { missing_rates: string[]; assumed_mode_person_trips: number; modes_loaded: boolean; settings: Record<string, number | null>; tiers: { min_days_ahead: number; factor: number }[] };
 };
 
-export default function Costs({ isAdmin, whole }: { isAdmin: boolean; whole: boolean }) {
-  const year = 2027;
+export default function Costs({ year, isAdmin, whole }: { year: number; isAdmin: boolean; whole: boolean }) {
   const [f, setF] = useState<Forecast | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ahead, setAhead] = useState<number | "">("");
@@ -31,7 +30,7 @@ export default function Costs({ isAdmin, whole }: { isAdmin: boolean; whole: boo
   const load = useCallback(async () => {
     const r = await api<Forecast>(`/api/cost/${year}/forecast${ahead ? `?book_ahead_days=${ahead}` : ""}`);
     if (r.ok) { setF(r.data); setError(null); } else setError(r.error);
-  }, [ahead]);
+  }, [ahead, year]);
   useEffect(() => { const t = setTimeout(() => void load(), ahead ? 400 : 0); return () => clearTimeout(t); }, [load, ahead]);
 
   if (error) return <section className="card"><p className="problem">{error}</p></section>;

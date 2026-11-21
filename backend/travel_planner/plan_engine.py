@@ -92,6 +92,25 @@ class ERule:
     severity: str = "warn"
 
 
+def year_schedule(params: dict[str, Any]) -> tuple[int, int] | None:
+    """(every N years, first year) of a quota or cadence rule that is not held every year; None = every year."""
+    every, first = params.get("every_n_years"), params.get("first_year")
+    if isinstance(every, int) and every >= 2 and isinstance(first, int):
+        return every, first
+    return None
+
+
+def held_in(params: dict[str, Any], year: int) -> bool:
+    """Is a quota or cadence rule in force in this plan year? (Every 2 years from 2027: 2027, 2029, ...)"""
+    sched = year_schedule(params)
+    return sched is None or (year - sched[1]) % sched[0] == 0
+
+
+def schedule_phrase(params: dict[str, Any]) -> str:
+    sched = year_schedule(params)
+    return f"every {sched[0]} years, starting in {sched[1]}" if sched else ""
+
+
 @dataclass
 class EventIn:
     id: int
@@ -148,6 +167,7 @@ class Inputs:
     blackouts: list[BlackoutIn] = field(default_factory=list)
     positions: dict[str, tuple[int, str]] = field(default_factory=dict)  # code -> (level, function area)
     kept: list[TripView] = field(default_factory=list)  # existing trips that stay (manual, confirmed, ...)
+    not_held: dict[int, str] = field(default_factory=dict)  # event id -> why it is not held this year
 
 
 # ---------------------------------------------------------------------------------------------- outputs
@@ -589,6 +609,9 @@ class Planner:
             if t.visited.kind == "cluster" and not t.absorbed:
                 taken_clusters[(t.event_id,)].add(t.visited.id or 0)
         for ev in sorted(self.inp.events, key=lambda e: (self.rank[e.id], e.code), reverse=True):
+            if ev.id in self.inp.not_held:
+                self.result.skipped.append(f"{ev.name}: not held in {self.inp.year} ({self.inp.not_held[ev.id]}).")
+                continue
             n, rule, why = trips_per_unit(ev)
             if n is None:
                 self.result.skipped.append(f"{ev.name}: {why}.")

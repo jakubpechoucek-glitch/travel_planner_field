@@ -80,6 +80,7 @@ If you see **You do not have access yet**, your sign-in worked but nobody has li
 - The **sidebar** on the left lists the pages you may use. On a phone it becomes a bar at the top that you can scroll sideways.
 - Your name and role are at the bottom of the sidebar; the arrow icon signs you out.
 - Every page has a **Help** panel at the top (the question-mark bar). Open it for a short explanation of that page.
+- When more than one plan year exists, a **Plan year** list at the top of Home, Plan and Costs switches the year.
 - The application follows your device's light or dark setting.
 
 ## 3.3 Home
@@ -204,6 +205,14 @@ Plan-wide **Checks** (rule warnings for the whole plan) and **Generate plan** ar
 3. If it looks right, select **Apply plan**. Trips nobody has changed are rebuilt; trips changed or added by hand stay.
 4. Open **Checks** below the plan to review warnings by type (trip limits per person, yearly limits, quotas, blackouts, overlaps).
 
+### Plan years
+
+1. Use the **Plan year** list at the top of Home, Plan and Costs to switch between years. Everything on the page then refers to that year.
+2. To start the next year, open **Plan** and select **Open plan year** (always the year after the last one). It starts as an empty draft; then generate it like any other year.
+3. Events that are held only every second year (see section 4.5, *Events and rules*) are planned in their years only. In the other years the preview lists them under *skipped* as “not held in 2028 (every 2 years, starting in 2027)” and no warning is raised for them.
+
+> **Note** Blackout periods belong to one plan year. Define the conference month only in the years the conference is held.
+
 ### Publishing
 
 1. When the plan is reviewed, select **Publish plan** and confirm. Everyone with a trip now sees it in My plan, and the plan can no longer be generated again.
@@ -262,6 +271,7 @@ Event types, rules, positions and blackout periods are data, not program code, s
 | Add or edit an **event type** | Select **Add event type** or an event in the list, then *Edit*. Set name, short code, who organizes, which unit kind is visited, typical length and transport, and notes. |
 | Define **who takes part** | In the event's participation list choose each position, whether it joins by default, whether it travels or is a host, and an optional yearly limit (for example Head of Field up to 3 times). |
 | Add a **rule** | Select **Add rule**: kind of rule (cadence, annual quota, participation cap, period cap, preferred window, rotation, concurrency cap), scope, period, minimum and maximum, and what happens if it is broken (info, warning or block). Rules are versioned: saving creates a new version. |
+| **Hold an event every second year** | In a yearly quota or cadence rule, open **Which years**, enter *Held every … years* (for example 2) and the **first year** (for example 2027). The event is then planned in 2027, 2029, 2031 and so on and left out of the years in between. Give a second event the first year 2028 to plan it in the off years (for example a leadership alignment offsite in the years without the conference). The rule is shown as one sentence, for example “At least 1 per year nationwide. Held every 2 years, starting in 2027.” |
 | Set **merge rules** | Choose which smaller event is combined into which bigger one. |
 | Add a **blackout period** | Select **Add blackout period**: dates, the event types it applies to (none = all), what happens if a trip falls in it, and optionally the event that is held in this period (for example the conference). |
 | **Remove** a rule or blackout | Use **Remove**; the change is written to the audit log. |
@@ -277,9 +287,9 @@ Open **Costs → Rates and travel modes** (administrators only):
 - **Early booking discounts:** tiers of *at least (days ahead)* and *cheaper by (%)*. Empty until the business enters real tiers; the application assumes none.
 - **Budget:** upload the budget workbook, **Check**, then load it. Lines are matched to events; unmatched lines are listed.
 
-### Plan year
+### Plan years
 
-Administrators can do everything a national planner does with the plan: generate, publish, withdraw, close.
+Administrators can do everything a national planner does with the plan: generate, publish, withdraw, close, and open new plan years (section 4.4).
 
 ## 4.6 Function planner and coordinator
 
@@ -323,6 +333,7 @@ These roles are meant for Training, Quality, Legal and travel-desk colleagues. I
 The generator is deterministic: the same organization and rules always give the same plan.
 
 - **How many trips:** from the event's cadence or yearly quota, per place (cluster, region, local office or nationwide). Events without quota or cadence are listed as not planned.
+- **Which years:** a quota or cadence can be set to apply every N years from a first year (for example every 2 years from 2027). In the other years the event is skipped and reported as not held.
 - **Order:** company events first, then wider scopes, then events with more participants.
 - **When:** each trip goes into a Monday-to-Friday week. Weeks get penalties for being far from the ideal slot, inside a blackout, outside preferred months, too close to a similar trip, when a traveler is already away, when a person would exceed a trip limit, when the cluster is crowded, and for breaking rotation. Combining nearby trips earns a bonus. Blocked blackout weeks are never used.
 - **Who:** the organizer holds the organizer position in the place (the leader acts if nobody does). Positions with a yearly limit are spread evenly over the year. A manager above the organizer joins only through a yearly limit or a combined event.
@@ -366,7 +377,8 @@ Severity levels: **info** (for your attention), **warning** (the plan may stay a
 | A trip was moved. Where is the reason? | On the trip's card in My plan, under *Originally planned for*, and in the trip history for planners. |
 | Why can I not change a trip? | It is outside your cluster or region, or it is a nationwide event. Ask the planner responsible. |
 | Why does the cost page not show a budget? | Only administrators and national planners see the budget, and it must be loaded first. |
-| Why is an event missing from the generated plan? | It has no yearly quota or cadence rule, or the place does not have enough clusters for its rotation rule. The Generate preview lists these cases. |
+| Why is an event missing from the generated plan? | It has no yearly quota or cadence rule, it is held only every second year and this is an off year, or the place does not have enough clusters for its rotation rule. The Generate preview lists these cases. |
+| Where is the plan for next year? | An administrator or national planner opens it with Plan → Open plan year. Then choose it in the Plan year list. |
 | Can I undo a change? | Open the trip, change it back and give a reason. The history keeps every step. |
 | How do I get the plan into Excel? | On Plan, select Export to Excel. |
 

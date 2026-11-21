@@ -194,3 +194,15 @@ def test_generator_settings_in_the_catalog(c):
     assert ok.status_code == 201
     rfm = {r["rule_key"] for r in event(cat, "REGIONAL-FIELD-MEET")["rules"]}
     assert rfm == {"RFM-QUOTA"}                      # the quarterly rule was replaced by a yearly quota per region
+
+
+def test_rule_held_every_n_years():
+    base = dict(rule_type="annual_quota", scope_kind="nationwide", event_type_id=1, min_count=1)
+    ok = RuleIn(**base, params={"every_n_years": 2, "first_year": 2027})
+    assert validate_rule(ok, positions=set(), events={1}) == []
+    assert any("first year" in m for m in validate_rule(RuleIn(**base, params={"every_n_years": 2}),
+                                                         positions=set(), events={1}))
+    assert any("years" in m for m in validate_rule(RuleIn(**base, params={"every_n_years": 1, "first_year": 2027}),
+                                                    positions=set(), events={1}))
+    text = describe_rule({**base, "params": ok.params, "position_id": None, "max_count": None}, {})
+    assert text == "At least 1 per year nationwide. Held every 2 years, starting in 2027."

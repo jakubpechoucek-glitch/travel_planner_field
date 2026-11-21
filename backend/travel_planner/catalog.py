@@ -9,6 +9,8 @@ from typing import Any, Literal
 from psycopg import Connection
 from pydantic import BaseModel, Field
 
+from .plan_engine import schedule_phrase
+
 RULE_TYPES = (
     "cadence", "annual_quota", "participation_cap", "period_cap", "preferred_window", "rotation", "concurrency_cap",
 )
@@ -103,6 +105,13 @@ def validate_rule(r: RuleIn, *, positions: set[int], events: set[int]) -> list[s
         errors.append("This kind of rule must belong to an event type.")
     if t in ("cadence", "rotation", "participation_cap", "period_cap", "concurrency_cap") and r.period is None:
         errors.append("Choose a period (week, month, quarter, half-year or year).")
+    if t in ("cadence", "annual_quota"):
+        every, first = r.params.get("every_n_years"), r.params.get("first_year")
+        if every is not None or first is not None:
+            if not (isinstance(every, int) and not isinstance(every, bool) and 2 <= every <= 10):
+                errors.append("Enter how often the event is held in years (2 to 10), or leave both year fields empty.")
+            if not (isinstance(first, int) and not isinstance(first, bool) and 2000 <= first <= 2100):
+                errors.append("Enter the first year the event is held (for example 2027).")
     if t == "cadence":
         if r.interval_n is None:
             errors.append("Enter how many periods apart the events should be (for example 2 months).")
@@ -147,6 +156,13 @@ def _count_phrase(mn: int | None, mx: int | None) -> str:
 
 def describe_rule(rule: dict[str, Any], position_names: dict[int, str]) -> str:
     """One readable sentence for a rule (also shown in the app and used in help)."""
+    text = _describe(rule, position_names)
+    sched = (rule.get("params") or {}) if rule["rule_type"] in ("cadence", "annual_quota") else {}
+    phrase = schedule_phrase(sched)
+    return f"{text} Held {phrase}." if text and phrase else text
+
+
+def _describe(rule: dict[str, Any], position_names: dict[int, str]) -> str:
     t, mn, mx = rule["rule_type"], rule.get("min_count"), rule.get("max_count")
     period = PERIOD_WORD.get(rule.get("period") or "", "")
     scope = SCOPE_WORD.get(rule["scope_kind"], "")
