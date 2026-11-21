@@ -124,7 +124,7 @@ Every change to the catalog is written to the audit log (event type or rule key 
 **Checks.** The server refuses incomplete or contradictory rules with a plain-English message (for example "Enter a minimum, a maximum, or both.").
 Blackout dates must fall in the plan year, and a closed plan year cannot be changed. Codes of event types are unique.
 
-**Decisions made while loading the starting catalog** (please confirm; see [open questions](09-open-questions.md#95-catalog-assumptions)):
+**Decisions made while loading the starting catalog** (please confirm; see [open questions](09-open-questions.md#94-catalog-assumptions)):
 
 - The two blackout months (April and December 2027) are placeholders taken from the 2027 Travel Plans. The rule "not in the month of the conference or year-end party" is expressed as blackout periods rather than as a rule that depends on other events.
 - The Head of Field limit of one trip a month is seeded as a *warning*, although the source also lists many more trips for the Head.

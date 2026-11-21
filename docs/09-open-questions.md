@@ -64,7 +64,7 @@ These points need a business decision:
 | I5 | The RM's own local office ("Mexico" for one RM) is a base, not a region. | Stored as the RM's base office (the office itself is taken from the AM and supervisor tables, which carry its region). |
 | I6 | Provinces (the *Reference* sheet) are not imported yet: its "area" names (*West Visayas*, *East Visayas*) do not match the cluster names (*Visayas West*, *Cebu*). | Local offices are loaded as locations. Provinces follow once the cluster names are agreed (D1). |
 
-## 9.5 Catalog assumptions
+## 9.4 Catalog assumptions
 
 Decisions taken when the starting catalog was loaded. Each can be changed in the app, but the business should confirm them:
 
@@ -80,7 +80,7 @@ Decisions taken when the starting catalog was loaded. Each can be changed in the
 | K8 | All quota and cap rules default to *warn*, as asked in the meeting ("a prompt when you have exceeded the frequency"). Rotation, cadence and window rules default to *info*. | Meeting |
 | K9 | "Joint visit: Partial" is stored as *Partly*; which functions join which trips is expressed in the participation table. | Events description |
 
-## 9.4 Product and design
+## 9.5 Product and design
 
 | # | Question |
 |---|----------|
@@ -91,7 +91,7 @@ Decisions taken when the starting catalog was loaded. Each can be changed in the
 | U5 | Notifications: e-mail only, or also Microsoft Teams? (Not in MVP.) |
 | U6 | Time to retain trip history after the plan year closes? |
 
-## 9.5 Next steps
+## 9.6 Next steps
 
 1. Business owner reviews documents 1 to 5 and answers B1 to B12, P1 to P5.
 2. Follow-up meeting (the Thursday session proposed at the kickoff) to walk through the calendar views.
