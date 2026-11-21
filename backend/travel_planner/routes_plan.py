@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from . import plan_export
+from . import actions, plan_export
 from . import plan_store as store
 from . import trip_edit as edit
 from .access import allowed_units, has_plan_access
@@ -183,6 +183,40 @@ def cancel_trip(trip_id: int, body: edit.CancelIn, request: Request, commit: boo
 def set_status(trip_id: int, body: edit.StatusIn, request: Request, who: Identity = Depends(plan_access)) -> dict:
     return _db(request, lambda conn, allowed: edit.set_status(conn, trip_id, body, who, allowed),
                commit=True, who=who, scoped=True)
+
+
+@router.get("/plan/trips/{trip_id}/area-options")
+def area_options(trip_id: int, request: Request, who: Identity = Depends(plan_access)) -> list[dict]:
+    return _db(request, edit.area_options, trip_id, who=who, scoped=True)
+
+
+@router.post("/plan/trips/{trip_id}/choose-area")
+def choose_area(trip_id: int, body: edit.ChooseAreaIn, request: Request, who: Identity = Depends(plan_access)) -> dict:
+    return _db(request, lambda conn, allowed: edit.choose_area(conn, trip_id, body, who, allowed),
+               commit=True, who=who, scoped=True)
+
+
+@router.get("/plan/trips/{trip_id}/actions")
+def trip_actions(trip_id: int, request: Request, who: Identity = Depends(plan_access)) -> list[dict]:
+    return _db(request, actions.list_actions, trip_id, who=who, scoped=True)
+
+
+@router.post("/plan/trips/{trip_id}/actions", status_code=201)
+def add_action(trip_id: int, body: actions.ActionIn, request: Request, who: Identity = Depends(plan_access)) -> dict:
+    return _db(request, lambda conn, allowed: actions.add_action(conn, trip_id, body, who, allowed),
+               commit=True, who=who, scoped=True)
+
+
+@router.put("/plan/actions/{action_id}")
+def update_action(action_id: int, body: actions.ActionUpdate, request: Request,
+                  who: Identity = Depends(plan_access)) -> dict:
+    return _db(request, lambda conn, allowed: actions.update_action(conn, action_id, body, who, allowed),
+               commit=True, who=who, scoped=True)
+
+
+@router.get("/plan/{year}/follow-ups")
+def follow_ups(year: int, request: Request, who: Identity = Depends(plan_access)) -> dict:
+    return _db(request, lambda conn, allowed: actions.follow_ups(conn, year, allowed), who=who, scoped=True)
 
 
 @router.post("/plan/{year}/trips", status_code=200)

@@ -60,6 +60,18 @@ curl -X POST "http://localhost:8000/api/admin/plan/2027/generate?commit=false"  
 
 A rule is held every N years with `params.every_n_years` and `params.first_year` (quota and cadence rules only); the generator skips the event in the other years and reports it under *skipped*.
 
+## 10.3c-2 Area choice and follow-up (API)
+
+| Endpoint | Who | Purpose |
+|----------|-----|---------|
+| `GET /api/plan/trips/{id}/area-options` | planners in scope | The areas (clusters) of the region of a trip whose area is still to be chosen |
+| `POST /api/plan/trips/{id}/choose-area` `{cluster_id, area_focus?}` | planners in scope | Choose the area; recorded in the history |
+| `GET /api/plan/trips/{id}/actions`, `POST` the same path `{title, due_date?}` | planners in scope (write), anyone who can see the trip (read) | The actions of a trip (at most three that are not dropped) |
+| `PUT /api/plan/actions/{id}` `{status?, title?, due_date?, close_note?}` | planners in scope | Close (`done`, `dropped`), reopen or edit an action |
+| `GET /api/plan/{year}/follow-ups` | planners | Trips with a follow-up and their state: `overdue`, `missing`, `open`, `upcoming`, `closed` |
+
+The trip detail returns `area_pending`, `area_decide_by`, `area_focus`, `follow_up_days`, `follow_up_due` and `actions`. Event types take `area_choice_days` and `follow_up_days`.
+
 ## 10.3c Changing trips (API)
 
 All under `/api/plan` and limited by role scope (`backend/travel_planner/access.py`):

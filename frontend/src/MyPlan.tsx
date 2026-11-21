@@ -7,7 +7,7 @@ type Person = { name: string; role: string; travels: boolean; position: string |
 type Trip = {
   id: number; title: string; event: string; event_code: string; place: string | null; status: string; notes: string | null;
   start_date: string; end_date: string; generated_start_date: string | null; generated_end_date: string | null;
-  cancel_reason: string | null; my_role: string; my_travels: boolean; organizer: string | null; combined: string[];
+  cancel_reason: string | null; area_pending?: boolean; area_decide_by?: string | null; my_role: string; my_travels: boolean; organizer: string | null; combined: string[];
   last_change: { type: string; reason: string | null; category: string | null; at: string } | null;
   participants: Person[]; participant_count: number;
 };
@@ -187,6 +187,7 @@ function TripCard({ t }: { t: Trip }) {
           <span className="pill"><Icon name={t.my_role === "host" ? "building" : t.my_role === "organizer" ? "users" : "plane"} size={13} />{ROLE_TEXT[t.my_role] ?? "You travel"}</span>
           {t.organizer && t.my_role !== "organizer" && <span>Organized by {t.organizer}</span>}
         </div>
+        {t.area_pending && <div className="note">The exact area will be chosen by {t.area_decide_by ? range(t.area_decide_by, t.area_decide_by) : "the planner"}; until then the date is reserved for the whole region.</div>}
         {t.combined.length > 0 && <div className="muted">Also held at this trip: {t.combined.join(", ")}</div>}
         {t.status === "cancelled" && t.cancel_reason && <div className="note">Cancelled: {t.cancel_reason}</div>}
         {t.status !== "cancelled" && (moved || (t.last_change && t.last_change.type !== "status")) && (

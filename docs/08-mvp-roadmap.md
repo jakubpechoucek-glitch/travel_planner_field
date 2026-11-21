@@ -52,6 +52,7 @@ Progress:
 - [x] **Excel export** of the plan (summary, trips, people, days away, changes, checks), scoped by role
 - [x] **Cost estimate** from the plan with the budget's own formula, plan against budget, early-booking effect, rates and travel modes, and cost columns in the Excel export
 - [x] **Events held every N years** (for example a biennial conference or an off-year meeting): *Which years* setting on quota and cadence rules, plan years opened from the Plan page, year selector
+- [x] **Choosing the area later** (Special Area visits hold a region slot) and **follow-up of actions** (up to three per trip, closed within 30 days), with the *Follow-ups* view
 - [ ] People timeline; synergy suggestions; "suggest a change" from a supervisor to the manager
 
 **Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.

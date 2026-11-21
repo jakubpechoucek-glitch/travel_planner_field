@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter, defaultdict
+from datetime import date, timedelta
 from typing import Any
 
 from psycopg import Connection
@@ -94,7 +95,7 @@ def load_inputs(conn: Connection, year: int, replace: set[int] | None = None) ->
     events = [
         pe.EventIn(e["id"], e["code"], e["name"], e["is_company_event"], e["visited_kind"], e["typical_days"],
                    e["typical_mode"], pos_code.get(e["organizer_position_id"]), parts[e["id"]],
-                   rules_by_event[e["id"]])
+                   rules_by_event[e["id"]], e["area_choice_days"])
         for e in conn.execute("SELECT * FROM event_type WHERE active ORDER BY id")
     ]
     active = {e.id for e in events}
@@ -149,6 +150,11 @@ def _save(conn: Connection, year: int, result: pe.Result, replace: set[int], act
         cur.executemany(
             "INSERT INTO trip_change(trip_id, changed_by, change_type, after_data) VALUES (%s,%s,'generated',%s)",
             [(ids[t.key], actor, json.dumps({"start": str(t.start), "end": str(t.end)})) for t in result.trips])
+    # events whose area is chosen later (Special Area visits): the trip holds the region slot until then
+    conn.execute(
+        "UPDATE trip t SET area_pending = true, area_decide_by = t.start_date - e.area_choice_days "
+        "FROM event_type e WHERE e.id = t.event_type_id AND e.area_choice_days IS NOT NULL "
+        "AND t.id = ANY(%s) AND t.merged_into_trip_id IS NULL AND t.status <> 'cancelled'", (list(ids.values()),))
     conn.execute("UPDATE plan_year SET status = 'review' WHERE year = %s AND status = 'draft'", (year,))
 
 
@@ -266,7 +272,7 @@ def plan_trips(conn: Connection, year: int, unit_id: int | None, month: int | No
         "SELECT t.id, t.title, t.start_date, t.end_date, t.status, t.source, t.notes, e.name AS event, "
         "e.code AS event_code, "
         "t.visited_org_unit_id, CASE u.kind WHEN 'local_office' THEN u.parent_id ELSE u.id END AS row_unit_id, "
-        "u.name AS place, "
+        "u.name AS place, t.area_pending, "
         "(SELECT count(*) FROM trip_participant p WHERE p.trip_id = t.id AND p.travels) AS travelers, "
         "(SELECT count(*) FROM trip m WHERE m.merged_into_trip_id = t.id) AS merged_count, "
         "EXISTS (SELECT 1 FROM trip_change c WHERE c.trip_id = t.id AND c.change_type NOT IN ('generated', 'created')) "
@@ -281,7 +287,7 @@ def plan_trips(conn: Connection, year: int, unit_id: int | None, month: int | No
 
 def trip_detail(conn: Connection, trip_id: int, allowed: set[int] | None = None) -> dict[str, Any]:
     t = conn.execute(
-        "SELECT t.*, e.name AS event, py.status AS plan_status, u.name AS place FROM trip t "
+        "SELECT t.*, e.name AS event, e.follow_up_days, py.status AS plan_status, u.name AS place FROM trip t "
         "JOIN event_type e ON e.id = t.event_type_id JOIN plan_year py ON py.year = t.plan_year "
         "LEFT JOIN org_unit u ON u.id = t.visited_org_unit_id WHERE t.id = %s", (trip_id,)).fetchone()
     if t is None or not can_see(allowed, t["visited_org_unit_id"]):
@@ -303,7 +309,23 @@ def trip_detail(conn: Connection, trip_id: int, allowed: set[int] | None = None)
             "generated_end_date": str(t["generated_end_date"]) if t["generated_end_date"] else None,
             "notes": t["notes"], "cancel_reason": t["cancel_reason"], "transport_mode": t["transport_mode"],
             "plan_year": t["plan_year"], "plan_status": t["plan_status"], "updated_at": t["updated_at"].isoformat(),
-            "editable": editable, "participants": people, "combined": merged}
+            "editable": editable, "participants": people, "combined": merged,
+            "area_pending": t["area_pending"],
+            "area_decide_by": str(t["area_decide_by"]) if t["area_decide_by"] else None,
+            "area_focus": t["area_focus"], "follow_up_days": t["follow_up_days"],
+            "follow_up_due": str(t["end_date"] + timedelta(days=t["follow_up_days"])) if t["follow_up_days"] else None,
+            "actions": actions_of(conn, trip_id)}
+
+
+def actions_of(conn: Connection, trip_id: int) -> list[dict[str, Any]]:
+    rows = conn.execute(
+        "SELECT a.id, a.title, a.due_date, a.status, a.close_note, a.closed_at, p.full_name AS closed_by "
+        "FROM trip_action a LEFT JOIN person p ON p.id = a.closed_by WHERE a.trip_id = %s ORDER BY a.id", (trip_id,)
+    ).fetchall()
+    for r in rows:
+        r["due_date"] = str(r["due_date"])
+        r["closed_at"] = r["closed_at"].isoformat() if r["closed_at"] else None
+    return rows
 
 
 def trip_history(conn: Connection, trip_id: int, allowed: set[int] | None = None) -> list[dict[str, Any]]:
@@ -377,10 +399,32 @@ def create_plan_year(conn: Connection, year: int, actor: int | None) -> dict[str
     return {"year": year, "status": "draft", "trips": 0}
 
 
+def area_warnings(conn: Connection, year: int, today: date | None = None) -> list[pe.Warn]:
+    """Areas that should have been chosen by now, and a mix of areas that exceeds what the rule allows."""
+    today = today or date.today()
+    out: list[pe.Warn] = []
+    for r in conn.execute(
+            "SELECT title, area_decide_by FROM trip WHERE plan_year = %s AND area_pending AND status <> 'cancelled' "
+            "AND area_decide_by < %s ORDER BY area_decide_by, id", (year, today)):
+        out.append(pe.Warn("warn", "area_overdue",
+                           f"Choose the area of {r['title']}: it was due on {r['area_decide_by']}."))
+    for rule in conn.execute(
+            "SELECT r.event_type_id, r.params, e.name FROM rule r JOIN event_type e ON e.id = r.event_type_id "
+            "WHERE r.active AND r.params ? 'area_mix'"):
+        counts = {c["area_focus"]: c["n"] for c in conn.execute(
+            "SELECT area_focus, count(*) AS n FROM trip WHERE plan_year = %s AND event_type_id = %s "
+            "AND status <> 'cancelled' AND area_focus IS NOT NULL GROUP BY area_focus", (year, rule["event_type_id"]))}
+        for focus, allowed_n in sorted(rule["params"]["area_mix"].items()):
+            if counts.get(focus, 0) > allowed_n:
+                out.append(pe.Warn("warn", "area_mix", f"{rule['name']}: {counts[focus]} {focus} areas chosen in "
+                                   f"{year}, the mix allows {allowed_n}."))
+    return out
+
+
 def plan_warnings(conn: Connection, year: int) -> dict[str, Any]:
     inp = load_inputs(conn, year)
     views = load_trip_views(conn, year)
-    warns = pe.evaluate(views, inp)
+    warns = pe.evaluate(views, inp) + area_warnings(conn, year)
     counts = Counter(w.code for w in warns)
     return {"year": year, "total": len(warns), "counts": dict(counts), "warnings": [w.__dict__ for w in warns[:200]]}
 

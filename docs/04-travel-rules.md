@@ -146,7 +146,7 @@ Migration `0008_leadership_events.sql` adds, as starting configuration (all edit
 
 | Event | Code | Rule in the catalog | How it fits |
 |-------|------|---------------------|-------------|
-| **Special Area visit (with Analysts)** | `SPECIAL-AREA` | One per region a year, preferably May, July or November (`SA-QUOTA`, `SA-WINDOW`) | The Head of Field and the Analysts; the Regional Manager joins, the Area Manager hosts. Combined with the Regional Field Meeting, so it counts as that region's Head visit for the month and does not stack on it |
+| **Special Area visit (with Analysts)** | `SPECIAL-AREA` | One per region a year, preferably May, July or November (`SA-QUOTA`, `SA-WINDOW`) | The Head of Field and the Analysts; the Regional Manager joins, the Area Manager hosts. The Special Area visit is the main trip and the Regional Field Meeting of that region is combined into it, so it counts as that region's Head visit for the month and does not stack on it. The area is chosen later ([section 4.9](#49-choosing-the-area-later)) |
 | **Skip-level session** | `SKIP-LEVEL` | Two per region a year (`SKIP-QUOTA`, info) | The Head of Field with supervisors and Area Managers (hosts) without their direct manager. Held during the Head's regional trip, so combined with the Regional Field Meeting |
 | **Cross-region peer shadow** | `PEER-SHADOW` | No rule: added by hand | A Regional Manager joins a peer's region visit in another region, once a year. The application does not choose "another region" itself |
 | **Leadership alignment offsite** | `STRAT` | One a year in the years without the conference: every 2 years from 2028, preferably November (`STRAT-QUOTA`, `STRAT-WINDOW`) | Head of Field, Regional Managers and Analysts. Uses the *every N years* setting ([section 4.4](#44-rule-types-the-application-must-support)) |
@@ -154,4 +154,23 @@ Migration `0008_leadership_events.sql` adds, as starting configuration (all edit
 
 A new position, **Analyst**, takes part in the Special Area visits and the offsite. The generator's *combine* step is what makes "replace, don't stack" work: a combined event is absorbed into the bigger trip and stays visible as a combined row.
 
-**Not in the application yet** (see [open questions](09-open-questions.md#94-catalog-assumptions), K12 to K17): choosing the specific area 60 days before a Special Area visit (the slot is locked, the area is chosen by hand), the "2 diagnostic plus 1 benchmark" mix, the 30-day action follow-up, and the outputs of each forum.
+**Still open** (see [open questions](09-open-questions.md#94-catalog-assumptions), K12 to K18): picking "another region" automatically for a peer shadow, the length of a skip-level session, and the outputs of each forum (briefs, succession lists). The area choice and the 30-day follow-up are described below.
+
+## 4.9 Choosing the area later
+
+Some visits are fixed in the calendar long before anybody knows *where*. A Special Area visit is locked per region a year ahead; the area is chosen about 60 days before, from live data.
+An event type can therefore carry **Choose the area this many days before** (`event_type.area_choice_days`, 60 for the Special Area visit):
+
+- The generator creates such a trip at **region level** and marks it *area to be chosen* (`trip.area_pending`) with a decision date (`area_decide_by` = start date minus the days). The plan, the heatmap and My plan show the region and the text that the area will be chosen by that date.
+- In the trip panel the planner (administrator, national or regional planner of the region) chooses one of the region's areas. The trip then belongs to that area, its title changes to the area and the history records "Area chosen: ...". This is the planned next step, so it needs no deviation reason.
+- Optionally the area is labelled **diagnostic or turnaround** or **benchmark or pilot** (`trip.area_focus`). A quota rule can carry `area_mix`, for example 2 diagnostic and 1 benchmark per year (`{"area_mix": {"diagnostic": 2, "benchmark": 1}}`, shown in the rule form as *Mix of areas*). Choosing more areas of one kind than allowed raises the check *Mix of areas*; a trip whose area is still open after its decision date raises *Areas still to be chosen*.
+- When a Special Area visit is combined with a Regional Field Meeting, the Special Area visit is the main trip (an event with an area choice outranks the others of the same breadth).
+
+## 4.10 Follow-up of actions
+
+Calendars track trips, not outcomes. An event type can carry **Follow up the actions this many days after** (`event_type.follow_up_days`; 30 for the Special Area visit, the Regional Field Meeting and the Head of Field area tour).
+For such trips the planners record up to **three actions** (title, due date; the due date defaults to the end of the trip plus the follow-up days) and close them as *done* (with an optional note) or *dropped*.
+
+- The **Follow-ups** view on the Plan page lists the trips with a follow-up by state: *late* (the period has passed and actions are open or missing), *no actions yet* (the visit is over), *in progress*, *not yet* (the trip has not ended) and *closed*. Late trips come first. Home shows a short summary.
+- Actions are visible and editable for planners in the scope of the trip; every change is in the audit log.
+- Not in the application: owners, reminders by e-mail, and links to documents (later phases).

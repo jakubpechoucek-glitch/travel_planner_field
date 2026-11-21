@@ -78,6 +78,7 @@ Implemented on the **Users** page (administrators only; `backend/travel_planner/
 | **Plan (own scope)** | Regional and area planners | The heatmap, trips and history of their own units; they can change those trips (see [Planning workflow](05-planning-workflow.md#53-manual-changes-and-reasons)). Plan-wide checks and plan generation stay with administrators and national planners |
 | **Calendar heatmap** | Planners | Rows = region/cluster/area, columns = month or week, cells = number of trips; click to drill down |
 | **Timeline** | Planners | Rows = people, columns = days; bars for trips; blackout periods shaded |
+| **Follow-ups** | Planners (own scope) | Trips with a follow-up: actions still to be recorded, in progress, late or closed (Plan → Follow-ups) |
 | **Compliance** | RM, Head | Trips versus minimum and maximum per event type, per unit; highlights under- and over-use |
 | **Synergies** | Planners | Suggested merges or moves (same destination, nearby dates) |
 | **Events and rules** | Everyone with access (read), Administrator (edit) | The event catalog, rules and blackout periods |

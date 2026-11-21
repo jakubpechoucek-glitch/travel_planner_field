@@ -1,3 +1,4 @@
+import { api } from "./api";
 import { ReactNode, useCallback, useEffect, useState } from "react";
 
 export type Detail = {
@@ -7,7 +8,11 @@ export type Detail = {
   editable: boolean;
   participants: { person_id: number; name: string; role: string; travels: boolean; position: string }[];
   combined: { id: number; event: string }[];
+  area_pending: boolean; area_decide_by: string | null; area_focus: string | null;
+  follow_up_days: number | null; follow_up_due: string | null;
+  actions: ActionItem[];
 };
+export type ActionItem = { id: number; title: string; due_date: string; status: string; close_note: string | null; closed_at: string | null; closed_by: string | null };
 type Hist = {
   id: number; changed_at: string; change_type: string; category: string | null; reason: string | null;
   before_data: Record<string, unknown> | null; after_data: Record<string, unknown> | null; changed_by: string;
@@ -198,6 +203,8 @@ export function TripPanel({ id, onChanged, onClose }: { id: number; onChanged: (
       </ul>
       {msg && <p className={msg.ok ? "good" : "problem"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
 
+      {d.area_pending && <AreaPicker d={d} onDone={async () => { setMsg({ text: "The area was chosen.", ok: true }); await load(); onChanged(); }} />}
+
       {mode === "view" && d.editable && (
         <p className="row">
           <button onClick={() => setMode("edit")}>Change this trip</button>
@@ -208,6 +215,8 @@ export function TripPanel({ id, onChanged, onClose }: { id: number; onChanged: (
       )}
       {mode === "edit" && <EditForm d={d} onCancel={() => setMode("view")} onDone={() => done("The change was saved.")} />}
       {mode === "cancel" && <CancelForm d={d} onCancel={() => setMode("view")} onDone={() => done("The trip was cancelled.")} />}
+
+      {(d.follow_up_days || d.actions.length > 0) && d.status !== "cancelled" && <Actions d={d} onChanged={load} />}
 
       <h4>History</h4>
       <ul className="hist">
@@ -415,5 +424,111 @@ export function AddTrip({ year, onDone, onCancel }: { year: number; onDone: (id:
       <SaveRow ok={ok} why={!ready ? "Choose an event type, a place and the dates." : !reasonOk ? "Enter a reason." : needAck && !ack ? "Confirm that you understand the warnings." : null}
         busy={busy} label="Add the trip" onSave={save} onCancel={onCancel} />
     </section>
+  );
+}
+
+/** A trip that holds a region slot: the planner chooses the area shortly before the trip. */
+function AreaPicker({ d, onDone }: { d: Detail; onDone: () => void }) {
+  const [options, setOptions] = useState<{ id: number; name: string }[]>([]);
+  const [cluster, setCluster] = useState<number | "">("");
+  const [focus, setFocus] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (d.editable) void api<{ id: number; name: string }[]>(`/api/plan/trips/${d.id}/area-options`).then((r) => r.ok && setOptions(r.data));
+  }, [d.id, d.editable]);
+  const late = d.area_decide_by !== null && d.area_decide_by < new Date().toISOString().slice(0, 10);
+  const save = async () => {
+    const r = await api(`/api/plan/trips/${d.id}/choose-area`, "POST", {
+      cluster_id: cluster, area_focus: focus || null, expected_updated_at: d.updated_at,
+    });
+    if (!r.ok) return setError(r.error);
+    onDone();
+  };
+  return (
+    <div className={late ? "impact" : "note"}>
+      <strong>{late ? "The area should have been chosen by" : "The area is chosen by"} {d.area_decide_by ? fmtDates(d.area_decide_by, d.area_decide_by) : "the planner"}.</strong>{" "}
+      Until then the trip holds the slot for the whole region{d.place ? ` (${d.place})` : ""}.
+      {d.editable && options.length > 0 && (
+        <div className="row" style={{ marginTop: 8 }}>
+          <label>Area
+            <select value={cluster} onChange={(e) => setCluster(e.target.value ? Number(e.target.value) : "")}>
+              <option value="">Choose…</option>
+              {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          </label>
+          <label>Why this area (optional)
+            <select value={focus} onChange={(e) => setFocus(e.target.value)}>
+              <option value="">Not specified</option>
+              <option value="diagnostic">Diagnostic or turnaround</option>
+              <option value="benchmark">Benchmark or pilot</option>
+            </select>
+          </label>
+          <button type="button" disabled={cluster === ""} onClick={save}>Choose area</button>
+        </div>
+      )}
+      {error && <p className="problem">{error}</p>}
+    </div>
+  );
+}
+
+const ACTION_LABEL: Record<string, string> = { open: "Open", done: "Done", dropped: "Dropped" };
+
+/** The follow-up: up to three actions from the visit, closed within the follow-up period. */
+function Actions({ d, onChanged }: { d: Detail; onChanged: () => Promise<void> }) {
+  const [title, setTitle] = useState("");
+  const [due, setDue] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const live = d.actions.filter((a) => a.status !== "dropped");
+  const today = new Date().toISOString().slice(0, 10);
+  const change = async (id: number, status: string) => {
+    const note = status === "done" ? window.prompt("What was done? (optional)") ?? undefined : undefined;
+    const r = await api(`/api/plan/actions/${id}`, "PUT", { status, close_note: note || undefined });
+    if (!r.ok) return setError(r.error);
+    setError(null); await onChanged();
+  };
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const r = await api(`/api/plan/trips/${d.id}/actions`, "POST", { title, due_date: due || undefined });
+    if (!r.ok) return setError(r.error);
+    setTitle(""); setDue(""); setError(null); await onChanged();
+  };
+  return (
+    <>
+      <h4>Follow-up</h4>
+      <p className="muted">
+        Record the top actions from this visit and close them{d.follow_up_due ? ` by ${fmtDates(d.follow_up_due, d.follow_up_due)}` : ""}. A trip has at most three actions.
+      </p>
+      {d.actions.length === 0 && <p className="muted">No actions recorded yet.</p>}
+      <ul className="hist">
+        {d.actions.map((a) => (
+          <li key={a.id} style={a.status === "dropped" ? { opacity: 0.55 } : undefined}>
+            <strong>{a.title}</strong>{" "}
+            <span className={`pill ${a.status === "done" ? "good" : a.status === "open" && a.due_date < today ? "bad" : ""}`}>
+              {a.status === "open" && a.due_date < today ? "Late" : ACTION_LABEL[a.status]}
+            </span>
+            <div className="muted">
+              Due {fmtDates(a.due_date, a.due_date)}
+              {a.closed_at && ` · closed by ${a.closed_by ?? "someone"}`}
+              {a.close_note && ` · ${a.close_note}`}
+            </div>
+            {d.editable && (
+              <span className="actions">
+                {a.status === "open" && <button type="button" className="link" onClick={() => change(a.id, "done")}>Mark done</button>}
+                {a.status === "open" && <button type="button" className="link" onClick={() => change(a.id, "dropped")}>Drop</button>}
+                {a.status !== "open" && live.length < 3 && <button type="button" className="link" onClick={() => change(a.id, "open")}>Reopen</button>}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      {d.editable && live.length < 3 && (
+        <form className="row" onSubmit={add}>
+          <label>New action<input required minLength={3} maxLength={300} value={title} onChange={(e) => setTitle(e.target.value)} /></label>
+          <label>Due (optional)<input type="date" value={due} onChange={(e) => setDue(e.target.value)} /></label>
+          <button type="submit">Add action</button>
+        </form>
+      )}
+      {error && <p className="problem">{error}</p>}
+    </>
   );
 }

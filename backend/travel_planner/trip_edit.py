@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 
 from . import plan_engine as pe
 from . import plan_store as store
-from .access import can_edit
+from .access import can_edit, can_see
 from .catalog import CatalogError
 from .identity import Identity
 
@@ -55,6 +55,12 @@ class EditIn(_Change):
     notes: str | None = Field(default=None, max_length=1000)
     add_participants: list[ParticipantIn] = Field(default_factory=list)
     remove_participants: list[int] = Field(default_factory=list)
+
+
+class ChooseAreaIn(BaseModel):
+    cluster_id: int
+    area_focus: Literal["diagnostic", "benchmark"] | None = None
+    expected_updated_at: datetime | None = None
 
 
 class CancelIn(_Change):
@@ -207,6 +213,44 @@ def edit_trip(conn: Connection, trip_id: int, body: EditIn, who: Identity, allow
         _record(conn, trip_id, change_type, body, who, before, after, t["plan_status"], new)
         result["trip"] = store.trip_detail(conn, trip_id, allowed)
     return result
+
+
+def area_options(conn: Connection, trip_id: int, allowed: set[int] | None) -> list[dict[str, Any]]:
+    """The areas (clusters) of the region of a trip whose area is still to be chosen."""
+    t = conn.execute("SELECT visited_org_unit_id, area_pending FROM trip WHERE id = %s", (trip_id,)).fetchone()
+    if t is None or not can_see(allowed, t["visited_org_unit_id"]):
+        raise CatalogError("The trip does not exist.", 404)
+    if not t["area_pending"]:
+        return []
+    return [r for r in conn.execute(
+        "SELECT id, name FROM org_unit WHERE kind = 'cluster' AND parent_id = %s ORDER BY name",
+        (t["visited_org_unit_id"],)) if allowed is None or r["id"] in allowed]
+
+
+def choose_area(conn: Connection, trip_id: int, body: ChooseAreaIn, who: Identity, allowed: set[int] | None) -> dict:
+    """Pick the area of a trip that held a region slot. This is the planned next step, not a deviation, so the
+    history row carries a standard reason."""
+    t = _lock_trip(conn, trip_id, allowed, body.expected_updated_at)
+    if not t["area_pending"]:
+        raise CatalogError("The area of this trip is already chosen.", 409)
+    cluster = conn.execute("SELECT id, name, parent_id FROM org_unit WHERE id = %s AND kind = 'cluster'",
+                           (body.cluster_id,)).fetchone()
+    if cluster is None or cluster["parent_id"] != t["visited_org_unit_id"]:
+        raise CatalogError("Choose an area of the region of this trip.")
+    if allowed is not None and cluster["id"] not in allowed:
+        raise CatalogError("You can only choose areas in your own scope.", 403)
+    title = f"{t['title'].rsplit(': ', 1)[0]}: {cluster['name']}"
+    conn.execute(
+        "UPDATE trip SET visited_org_unit_id = %s, title = %s, area_pending = false, area_focus = %s, "
+        "updated_by = %s, updated_at = now() WHERE id = %s",
+        (cluster["id"], title, body.area_focus, who.person_id, trip_id))
+    reason = f"Area chosen: {cluster['name']}" + (f" ({body.area_focus})." if body.area_focus else ".")
+    conn.execute(
+        "INSERT INTO trip_change(trip_id, changed_by, change_type, category, reason, before_data, after_data) "
+        "VALUES (%s,%s,'edited','other',%s,%s,%s)",
+        (trip_id, who.person_id, reason, json.dumps({"place": t["visited_org_unit_id"], "title": t["title"]}),
+         json.dumps({"place": cluster["id"], "title": title, "area_focus": body.area_focus})))
+    return {"committed": True, "trip": store.trip_detail(conn, trip_id, allowed)}
 
 
 def cancel_trip(conn: Connection, trip_id: int, body: CancelIn, who: Identity, allowed: set[int] | None,

@@ -206,3 +206,19 @@ def test_rule_held_every_n_years():
                                                     positions=set(), events={1}))
     text = describe_rule({**base, "params": ok.params, "position_id": None, "max_count": None}, {})
     assert text == "At least 1 per year nationwide. Held every 2 years, starting in 2027."
+
+
+def test_area_mix_rule_and_event_settings(c):
+    base = dict(rule_type="annual_quota", scope_kind="region", event_type_id=1, min_count=1)
+    ok = RuleIn(**base, params={"area_mix": {"diagnostic": 2, "benchmark": 1}})
+    assert validate_rule(ok, positions=set(), events={1}) == []
+    for bad in ({"area_mix": {"other": 1}}, {"area_mix": {}}, {"area_mix": {"benchmark": -1}}):
+        assert validate_rule(RuleIn(**base, params=bad), positions=set(), events={1})
+    sa = event(catalog(c), "SPECIAL-AREA")
+    assert sa["area_choice_days"] == 60 and sa["follow_up_days"] == 30
+    body = {"name": sa["name"], "visited_kind": "region", "area_choice_days": 45, "follow_up_days": None,
+            "participation": [], "merges": []}
+    r = c.put(f"/api/admin/event-types/{sa['id']}", headers=ADMIN, json=body)
+    assert r.status_code == 200, r.text
+    sa = event(catalog(c), "SPECIAL-AREA")
+    assert sa["area_choice_days"] == 45 and sa["follow_up_days"] is None

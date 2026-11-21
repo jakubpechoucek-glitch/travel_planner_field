@@ -10,6 +10,7 @@ type Me = { name: string | null; roles: string[]; person_id: number | null };
 type MyTrips = { linked: boolean; published: boolean; year: number | null; trips: { id: number; title: string; event_code?: string; place: string | null; status: string; start_date: string; end_date: string }[] };
 type Summary = { status: string; totals: { trips: number; merged: number; manual: number }; regions: { rows: { months: number[] }[] }[]; nationwide: { months: number[] } };
 type Warnings = { total: number };
+type FollowUps = { counts: Record<string, number> };
 type Forecast = { totals: { cost: number; person_trips: number }; by_month: { cost: number }[]; budget: { budget_total: number } | null };
 
 const greeting = () => {
@@ -24,11 +25,13 @@ export default function Home({ year, me, go, canSeePlan, canSeeCosts, canSeeOrg,
   const [plan, setPlan] = useState<Summary | null>(null);
   const [warn, setWarn] = useState<Warnings | null>(null);
   const [cost, setCost] = useState<Forecast | null>(null);
+  const [follow, setFollow] = useState<FollowUps | null>(null);
 
   useEffect(() => {
     if (me.person_id !== null) void api<MyTrips>(`/api/my/trips?year=${year}`).then((r) => r.ok && setMine(r.data));
     if (canSeePlan) void api<Summary>(`/api/plan/${year}/summary`).then((r) => r.ok && setPlan(r.data));
     if (canSeeOrg) void api<Warnings>(`/api/plan/${year}/warnings`).then((r) => r.ok && setWarn(r.data));
+    if (canSeePlan) void api<FollowUps>(`/api/plan/${year}/follow-ups`).then((r) => r.ok && setFollow(r.data));
     if (canSeeCosts) void api<Forecast>(`/api/cost/${year}/forecast`).then((r) => r.ok && setCost(r.data));
   }, [year, me.person_id, canSeePlan, canSeeOrg, canSeeCosts]);
 
@@ -97,6 +100,15 @@ export default function Home({ year, me, go, canSeePlan, canSeeCosts, canSeeOrg,
                 {warn.total > 0 && <button className="link" onClick={() => go("plan")}>Review</button>}</span>
             </div>
           )}
+        </div>
+      )}
+
+      {follow && (follow.counts.overdue ?? 0) + (follow.counts.missing ?? 0) + (follow.counts.open ?? 0) > 0 && (
+        <div className={`note no-print`} style={{ marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+          <span>
+            <strong>Follow-ups:</strong> {follow.counts.overdue ?? 0} late, {follow.counts.missing ?? 0} waiting for actions, {follow.counts.open ?? 0} in progress.
+          </span>
+          <button className="link" onClick={() => go("plan")}>Open the plan</button>
         </div>
       )}
 

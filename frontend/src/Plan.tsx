@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
 import { AddTrip, TripPanel } from "./TripPanel";
 import Timeline from "./Timeline";
+import FollowUps from "./FollowUps";
 import { Icon } from "./icons";
 
 type Row = { unit_id: number | null; label: string; months: number[] };
@@ -35,6 +36,8 @@ const WARNING_TITLES: Record<string, string> = {
   quota_over: "Too many trips for a place",
   blackout: "Trips in blackout periods",
   overlap: "A person in two trips at once",
+  area_overdue: "Areas still to be chosen",
+  area_mix: "Mix of areas (diagnostic and benchmark)",
 };
 const STATUS_LABEL: Record<string, string> = { draft: "Draft", review: "In review", published: "Published", closed: "Closed" };
 
@@ -55,7 +58,7 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
   const [withCancelled, setWithCancelled] = useState(false);
   const [tick, setTick] = useState(0);
   const [warnings, setWarnings] = useState<WarningSet | null>(null);
-  const [view, setView] = useState<"timeline" | "heatmap">("timeline");
+  const [view, setView] = useState<"timeline" | "heatmap" | "followups">("timeline");
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/plan/${year}/summary`);
@@ -140,6 +143,10 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
           second year (set in Events and rules) is planned in its years only; in the other years the preview lists it as <em>not held in that year</em>.
         </p>
         <p>
+          <strong>Choosing an area later.</strong> A Special Area visit first holds a date for the whole region. Open it and choose the area before the date shown; you can mark the area as diagnostic or benchmark.
+          <strong> Follow-up.</strong> For visits that have a follow-up, record up to three actions in the trip and close them in time. The <em>Follow-ups</em> view lists what is late or still to be recorded.
+        </p>
+        <p>
           <strong>Changing a trip.</strong> Open a trip and choose <em>Change this trip</em>. Every change needs a reason, which everyone who sees the
           trip can read in its history. Before you save, the app shows which rules the change would break; a warning must be confirmed, and a rule
           marked <em>block</em> does not allow the change. Trips you changed or added are kept when the plan is generated again. You can change the
@@ -217,7 +224,9 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
           <div className="segctl" role="group" aria-label="View" style={{ margin: "6px 0 14px" }}>
             <button type="button" className={view === "timeline" ? "on" : ""} onClick={() => setView("timeline")}>Timeline</button>
             <button type="button" className={view === "heatmap" ? "on" : ""} onClick={() => setView("heatmap")}>Heatmap by month</button>
+            <button type="button" className={view === "followups" ? "on" : ""} onClick={() => setView("followups")}>Follow-ups</button>
           </div>
+          {view === "followups" && <FollowUps year={year} tick={tick} onOpen={setOpenId} />}
           {view === "timeline" && <Timeline year={year} summary={summary} tick={tick} onOpen={setOpenId} />}
           {view === "heatmap" && (
           <div className="heatwrap">

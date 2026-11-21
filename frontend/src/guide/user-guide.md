@@ -154,6 +154,22 @@ The **Plan** page has two views, switched at the top of the plan card:
 4. Choose a **type of reason** and write the **reason for the change** (required). Warnings you accept must be acknowledged with a reason.
 5. Save. The change appears in the trip's **History** and, for the people on the trip, in My plan.
 
+### Choosing the area later
+
+A Special Area visit first holds a date for the whole region, so the calendar can be locked a year ahead. The trip says **The area is chosen by** a date (60 days before the visit). When you open it:
+
+1. Under **Area**, choose the area (cluster) of the region.
+2. Optionally choose **Why this area**: *Diagnostic or turnaround* or *Benchmark or pilot*. The catalog can limit the mix, for example at most 2 diagnostic and 1 benchmark a year; more of one kind raises a check.
+3. Select **Choose area**. The trip now belongs to that area and the history says “Area chosen: …”. After the date, an unchosen area appears in the plan checks as *Areas still to be chosen*.
+
+### Follow-up of actions
+
+Visits such as the Special Area visit, the Regional Field Meeting and the Head of Field area tour have a **Follow-up**: up to **three actions** are recorded on the trip and closed within 30 days after it ends.
+
+1. Open the trip and go to **Follow-up**. Type the action under **New action**, optionally set a due date (the default is 30 days after the trip), and select **Add action**.
+2. When an action is done, select **Mark done** and add a short note. **Drop** removes an action that is no longer needed and frees a place; **Reopen** brings it back.
+3. Open **Plan → Follow-ups** to see all trips with a follow-up: *Late*, *No actions yet*, *In progress*, *Not yet* and *Closed*. Late ones come first. Home shows a short summary.
+
 ### Other trip actions
 
 | Action | What it does |
@@ -274,6 +290,7 @@ Event types, rules, positions and blackout periods are data, not program code, s
 | **Hold an event every second year** | In a yearly quota or cadence rule, open **Which years**, enter *Held every … years* (for example 2) and the **first year** (for example 2027). The event is then planned in 2027, 2029, 2031 and so on and left out of the years in between. Give a second event the first year 2028 to plan it in the off years (for example a leadership alignment offsite in the years without the conference). The rule is shown as one sentence, for example “At least 1 per year nationwide. Held every 2 years, starting in 2027.” |
 | Set **merge rules** | Choose which smaller event is combined into which bigger one. |
 | Add a **blackout period** | Select **Add blackout period**: dates, the event types it applies to (none = all), what happens if a trip falls in it, and optionally the event that is held in this period (for example the conference). |
+| Choose the **area later**, and **follow up** actions | In the event form, set **Choose the area this many days before** and **Follow up the actions this many days after**. In a yearly quota rule, **Mix of areas** limits how many diagnostic and benchmark areas a year may have. |
 | **Remove** a rule or blackout | Use **Remove**; the change is written to the audit log. |
 
 ### Costs: rates, modes and budget
@@ -366,12 +383,12 @@ The starting catalog includes events that give the Head of Field time on the gro
 
 | Event | What it is | How it is planned |
 |---|---|---|
-| **Special Area visit (with Analysts)** | The Head of Field and the Analysts examine one area: what the dashboards say against what happens on the floor. | One per region a year, preferably May, July or November. It counts as that region's Head visit for the month (combined with the Regional Field Meeting). The planner chooses the area. |
+| **Special Area visit (with Analysts)** | The Head of Field and the Analysts examine one area: what the dashboards say against what happens on the floor. | One per region a year, preferably May, July or November. It counts as that region's Head visit for the month (the Regional Field Meeting is combined into it). The region slot is locked first; the planner chooses the area 60 days before, as diagnostic or benchmark. Actions are followed up for 30 days. |
 | **Skip-level session** | A 60 to 90 minute block with supervisors and Area Managers without their direct manager. | Two per region a year, held during the Head of Field's regional trip. |
 | **Cross-region peer shadow** | A Regional Manager joins a peer's region visit in another region. | One per Regional Manager a year. Add it by hand with **Add a trip**. |
 | **Leadership alignment offsite** | Two days for the Head of Field, Regional Managers and Analysts to reset KPIs and budgets. | Held every second year (the years without the conference), first in 2028, preferably November. |
 
-> **Note** Travel-load guardrail: the Head of Field's trips are limited to 16 a year (a warning, not a block). A new major event should be combined with, or replace, a routine visit instead of being added on top. The 30-day follow-up of actions and the exact choice of area 60 days ahead are not part of the application yet.
+> **Note** Travel-load guardrail: the Head of Field's trips are limited to 16 a year (a warning, not a block). A new major event should be combined with, or replace, a routine visit instead of being added on top. The area of a Special Area visit is chosen later and the actions of the visit are followed up for 30 days (section 4.2).
 
 # 6. Privacy and security
 
@@ -391,6 +408,8 @@ The starting catalog includes events that give the Head of Field time on the gro
 | Why can I not change a trip? | It is outside your cluster or region, or it is a nationwide event. Ask the planner responsible. |
 | Why does the cost page not show a budget? | Only administrators and national planners see the budget, and it must be loaded first. |
 | Why is an event missing from the generated plan? | It has no yearly quota or cadence rule, it is held only every second year and this is an off year, or the place does not have enough clusters for its rotation rule. The Generate preview lists these cases. |
+| Why does a trip show a whole region instead of an area? | Its area is chosen later. Planners choose it in the trip before the date shown (section 4.2). |
+| Where do I see actions that are still open? | Plan → Follow-ups lists the trips with open or missing actions; Home shows a summary. |
 | Where is the plan for next year? | An administrator or national planner opens it with Plan → Open plan year. Then choose it in the Plan year list. |
 | Can I undo a change? | Open the trip, change it back and give a reason. The history keeps every step. |
 | How do I get the plan into Excel? | On Plan, select Export to Excel. |

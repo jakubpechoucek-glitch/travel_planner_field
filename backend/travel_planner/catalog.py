@@ -63,6 +63,8 @@ class EventTypeIn(BaseModel):
     typical_days: int | None = Field(default=None, ge=1, le=30)
     typical_mode: Literal["land", "air", "sea", "air_land", "air_sea", "mixed"] | None = None
     scheduling_notes: str | None = Field(default=None, max_length=1000)
+    area_choice_days: int | None = Field(default=None, ge=1, le=365)  # the area is chosen this many days before
+    follow_up_days: int | None = Field(default=None, ge=1, le=365)    # actions are followed up this long after the trip
     active: bool = True
     participation: list[ParticipationIn] = Field(default_factory=list)
     merges: list[MergeIn] = Field(default_factory=list)
@@ -112,6 +114,12 @@ def validate_rule(r: RuleIn, *, positions: set[int], events: set[int]) -> list[s
                 errors.append("Enter how often the event is held in years (2 to 10), or leave both year fields empty.")
             if not (isinstance(first, int) and not isinstance(first, bool) and 2000 <= first <= 2100):
                 errors.append("Enter the first year the event is held (for example 2027).")
+    mix = r.params.get("area_mix")
+    if mix is not None:
+        if t != "annual_quota" or not isinstance(mix, dict) or not mix or not all(
+                k in ("diagnostic", "benchmark") and isinstance(v, int) and not isinstance(v, bool) and v >= 0
+                for k, v in mix.items()):
+            errors.append("The mix of areas needs a number (0 or more) for diagnostic and/or benchmark areas.")
     if t == "cadence":
         if r.interval_n is None:
             errors.append("Enter how many periods apart the events should be (for example 2 months).")
@@ -274,7 +282,8 @@ def _check_event(conn: Connection, data: EventTypeIn, event_id: int | None) -> N
 def save_event_type(conn: Connection, event_id: int | None, data: EventTypeIn, actor: int | None) -> int:
     _check_event(conn, data, event_id)
     fields = (data.name, data.description, data.organizer_position_id, data.visited_kind, data.joint_visit,
-              data.is_company_event, data.typical_days, data.typical_mode, data.scheduling_notes, data.active)
+              data.is_company_event, data.typical_days, data.typical_mode, data.scheduling_notes, data.area_choice_days,
+              data.follow_up_days, data.active)
     if event_id is None:
         if not data.code:
             raise CatalogError("Enter a short code, for example AM-FSV-VISIT.")
@@ -282,13 +291,15 @@ def save_event_type(conn: Connection, event_id: int | None, data: EventTypeIn, a
             raise CatalogError(f"The code {data.code} is already used.", 409)
         event_id = conn.execute(
             "INSERT INTO event_type(name, description, organizer_position_id, visited_kind, joint_visit, "
-            "is_company_event, typical_days, typical_mode, scheduling_notes, active, code) "
-            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id", (*fields, data.code)).fetchone()["id"]
+            "is_company_event, typical_days, typical_mode, scheduling_notes, area_choice_days, follow_up_days, "
+            "active, code) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id",
+            (*fields, data.code)).fetchone()["id"]
         action = "catalog.event_type.create"
     else:
         found = conn.execute(
             "UPDATE event_type SET name=%s, description=%s, organizer_position_id=%s, visited_kind=%s, "
-            "joint_visit=%s, is_company_event=%s, typical_days=%s, typical_mode=%s, scheduling_notes=%s, active=%s "
+            "joint_visit=%s, is_company_event=%s, typical_days=%s, typical_mode=%s, scheduling_notes=%s, "
+            "area_choice_days=%s, follow_up_days=%s, active=%s "
             "WHERE id=%s RETURNING id", (*fields, event_id)).fetchone()
         if not found:
             raise CatalogError("The event type does not exist.", 404)

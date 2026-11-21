@@ -32,6 +32,8 @@ type EventType = {
   typical_days: number | null;
   typical_mode: string | null;
   scheduling_notes: string | null;
+  area_choice_days: number | null;
+  follow_up_days: number | null;
   active: boolean;
   participation: Part[];
   rules: Rule[];
@@ -137,6 +139,10 @@ export default function Catalog({ isAdmin }: { isAdmin: boolean }) {
           Open the plan years you need with <em>Open plan year</em> on the Plan page.
         </p>
         <p>
+          <strong>Area chosen later and follow-up.</strong> In the event form, <em>Choose the area this many days before</em> makes the plan hold a slot for the whole region until then (for example 60 days for Special Area visits).
+          <em> Follow up the actions this many days after</em> asks planners to record and close up to three actions after the visit. A quota rule can also limit the <em>mix of areas</em>, for example at most 2 diagnostic and 1 benchmark a year.
+        </p>
+        <p>
           <strong>Blackout periods</strong> are dates when some events should not take place, for example the month of
           the conference. {isAdmin ? "" : "Only administrators can change the catalog."}
         </p>
@@ -201,6 +207,8 @@ function EventView({ event, data, positions, isAdmin, onEdit, onChanged }: {
         <dt>Organizer</dt><dd>{organizer ?? "Not set"}</dd>
         <dt>Visits</dt><dd>{VISITED[event.visited_kind]}</dd>
         <dt>Others join</dt><dd>{JOINT[event.joint_visit]}</dd>
+        {event.area_choice_days && (<><dt>Area chosen</dt><dd>{event.area_choice_days} days before the trip; the plan holds a slot for the region until then</dd></>)}
+        {event.follow_up_days && (<><dt>Follow-up</dt><dd>Actions are closed within {event.follow_up_days} days after the trip</dd></>)}
         <dt>Typical length</dt><dd>{event.typical_days ? `${event.typical_days} day${event.typical_days === 1 ? "" : "s"}` : "Not set"}</dd>
         <dt>Transport</dt><dd>{event.typical_mode ? MODES[event.typical_mode] : "Not set"}</dd>
       </dl>
@@ -293,6 +301,9 @@ function RuleForm({ rule, eventId, positions, onCancel, onSaved }: {
   const [unit, setUnit] = useState((rule?.params.unit as string) ?? "cluster");
   const [every, setEvery] = useState<number | "">((rule?.params.every_n_years as number) ?? 1);
   const [firstYear, setFirstYear] = useState<number | "">((rule?.params.first_year as number) ?? "");
+  const mix = (rule?.params.area_mix ?? {}) as { diagnostic?: number; benchmark?: number };
+  const [mixDiag, setMixDiag] = useState<number | "">(mix.diagnostic ?? "");
+  const [mixBench, setMixBench] = useState<number | "">(mix.benchmark ?? "");
   const [severity, setSeverity] = useState<Severity>(rule?.severity ?? "warn");
   const [note, setNote] = useState(rule?.description ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -319,7 +330,12 @@ function RuleForm({ rule, eventId, positions, onCancel, onSaved }: {
       min_count: type === "cadence" || type === "preferred_window" ? null : toNum(min),
       max_count: type === "cadence" || type === "preferred_window" ? null : toNum(max),
       params: type === "preferred_window" ? { months } : type === "rotation" ? { unit }
-        : (type === "annual_quota" || type === "cadence") && Number(every) >= 2 ? { every_n_years: Number(every), first_year: toNum(firstYear) } : {},
+        : type === "annual_quota" || type === "cadence"
+          ? {
+            ...(Number(every) >= 2 ? { every_n_years: Number(every), first_year: toNum(firstYear) } : {}),
+            ...(type === "annual_quota" && (mixDiag !== "" || mixBench !== "")
+              ? { area_mix: { ...(mixDiag !== "" ? { diagnostic: mixDiag } : {}), ...(mixBench !== "" ? { benchmark: mixBench } : {}) } } : {}),
+          } : {},
       severity,
       description: note || null,
     };
@@ -386,6 +402,16 @@ function RuleForm({ rule, eventId, positions, onCancel, onSaved }: {
           <p className="muted">1 means every year. With 2, the event is planned only in the first year and every second year after it (for example 2027, 2029, 2031); in the other years it is left out of the plan.</p>
         </fieldset>
       )}
+      {type === "annual_quota" && (
+        <fieldset>
+          <legend>Mix of areas (optional)</legend>
+          <div className="row">
+            <label>At most diagnostic or turnaround<input type="number" min={0} value={mixDiag} onChange={(e) => setMixDiag(e.target.value === "" ? "" : Number(e.target.value))} /></label>
+            <label>At most benchmark or pilot<input type="number" min={0} value={mixBench} onChange={(e) => setMixBench(e.target.value === "" ? "" : Number(e.target.value))} /></label>
+          </div>
+          <p className="muted">For events whose area is chosen later (for example Special Area visits): a warning appears when a year has more areas of one kind than allowed here, for example 2 diagnostic and 1 benchmark.</p>
+        </fieldset>
+      )}
       {type === "rotation" && (
         <label>Rotate through
           <select value={unit} onChange={(e) => setUnit(e.target.value)}>
@@ -446,6 +472,8 @@ function EventForm({ event, data, onDone, onCancel }: {
     joint_visit: event?.joint_visit ?? "no",
     is_company_event: event?.is_company_event ?? false,
     typical_days: event?.typical_days ?? ("" as number | ""),
+    area_choice_days: event?.area_choice_days ?? ("" as number | ""),
+    follow_up_days: event?.follow_up_days ?? ("" as number | ""),
     typical_mode: event?.typical_mode ?? "",
     scheduling_notes: event?.scheduling_notes ?? "",
     active: event?.active ?? true,
@@ -467,6 +495,8 @@ function EventForm({ event, data, onDone, onCancel }: {
       joint_visit: f.joint_visit,
       is_company_event: f.is_company_event,
       typical_days: f.typical_days === "" ? null : f.typical_days,
+      area_choice_days: f.area_choice_days === "" ? null : f.area_choice_days,
+      follow_up_days: f.follow_up_days === "" ? null : f.follow_up_days,
       typical_mode: f.typical_mode || null,
       scheduling_notes: f.scheduling_notes || null,
       active: f.active,
@@ -512,6 +542,10 @@ function EventForm({ event, data, onDone, onCancel }: {
       <div className="row">
         <label>Typical length (days)
           <input type="number" min={1} max={30} value={f.typical_days} onChange={(e) => setF({ ...f, typical_days: e.target.value ? Number(e.target.value) : "" })} /></label>
+        <label>Choose the area this many days before (optional)
+          <input type="number" min={1} max={365} value={f.area_choice_days} onChange={(e) => setF({ ...f, area_choice_days: e.target.value ? Number(e.target.value) : "" })} /></label>
+        <label>Follow up the actions this many days after (optional)
+          <input type="number" min={1} max={365} value={f.follow_up_days} onChange={(e) => setF({ ...f, follow_up_days: e.target.value ? Number(e.target.value) : "" })} /></label>
         <label>Transport
           <select value={f.typical_mode} onChange={(e) => setF({ ...f, typical_mode: e.target.value })}>
             <option value="">Not set</option>

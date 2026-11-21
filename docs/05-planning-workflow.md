@@ -185,6 +185,12 @@ today's fares, the fares if every one were booked N days ahead, and the saving. 
 
 **Not included:** baggage fees, travel insurance, laundry, cash advances, incentive trips and anything outside field collections; fares by route or date; changes after booking. These can be added as rates or lines.
 
+## 5.10 Area choice and follow-up
+
+Trips whose area is chosen later, and the follow-up of actions after a visit, are described in [Travel rules, sections 4.9 and 4.10](04-travel-rules.md#49-choosing-the-area-later).
+In the plan workflow: after generation, a Special Area visit holds a region slot; the planner chooses the area in the trip panel before the decision date (**Plan → trip → Choose area**);
+after the visit the top actions are recorded and closed under **Follow-up** in the trip panel, and tracked in the **Follow-ups** view. Overdue areas and an over-used mix of areas appear in the plan checks.
+
 ## 5.8 In-app help
 
 Every screen has a **Help** panel and contextual tooltips in American English, covering:

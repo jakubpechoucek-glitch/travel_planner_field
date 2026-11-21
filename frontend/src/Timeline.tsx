@@ -10,7 +10,7 @@ export type Summary = {
 };
 type Trip = {
   id: number; title: string; start_date: string; end_date: string; status: string; source: string; event: string;
-  event_code: string; place: string | null; row_unit_id: number | null; travelers: number; changed: boolean;
+  event_code: string; place: string | null; area_pending: boolean; row_unit_id: number | null; travelers: number; changed: boolean;
 };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -86,6 +86,7 @@ export default function Timeline({ year, summary, tick, onOpen }: { year: number
                 <b>{trip.title}</b>
                 <div>{fmt(trip.start_date)}{trip.end_date !== trip.start_date ? ` to ${fmt(trip.end_date)}` : ""}</div>
                 <div className="t-muted">{fam.label} · {trip.travelers} {trip.travelers === 1 ? "traveler" : "travelers"}{trip.place ? ` · ${trip.place}` : ""}</div>
+                {trip.area_pending && <div className="t-muted">Area still to be chosen</div>}
               </>
             );
             return (

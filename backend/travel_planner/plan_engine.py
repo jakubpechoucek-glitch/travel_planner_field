@@ -123,6 +123,7 @@ class EventIn:
     organizer_position: str | None = None
     positions: list[EventPos] = field(default_factory=list)
     rules: list[ERule] = field(default_factory=list)
+    area_choice_days: int | None = None  # the area is chosen this many days before the trip
 
 
 @dataclass
@@ -389,7 +390,8 @@ class Planner:
 
     # ----- ranks, weeks
     def _rank(self, e: EventIn) -> tuple:
-        return (e.is_company, BREADTH.get(e.visited_kind, 0), len(e.positions))
+        # an event whose area is chosen later is the main trip when it is combined with a regular visit
+        return (e.is_company, BREADTH.get(e.visited_kind, 0), len(e.positions) + (100 if e.area_choice_days else 0))
 
     def week_of(self, d: date) -> int:
         return (d - self.first).days // 7

@@ -34,7 +34,8 @@ def my_trips(conn: Connection, person_id: int | None, year: int | None, planner:
         return base
     trips = conn.execute(
         "SELECT t.id, t.title, t.start_date, t.end_date, t.status, t.source, t.notes, t.cancel_reason, "
-        "t.generated_start_date, t.generated_end_date, e.name AS event, e.code AS event_code, u.name AS place, "
+        "t.generated_start_date, t.generated_end_date, t.area_pending, t.area_decide_by, e.name AS event, "
+        "e.code AS event_code, u.name AS place, "
         "tp.role AS my_role, tp.travels AS my_travels, "
         "(SELECT p.full_name FROM trip_participant o JOIN person p ON p.id = o.person_id "
         " WHERE o.trip_id = t.id AND o.role = 'organizer' ORDER BY p.full_name LIMIT 1) AS organizer, "
@@ -61,7 +62,7 @@ def my_trips(conn: Connection, person_id: int | None, year: int | None, planner:
             "ORDER BY (tp.role = 'organizer') DESC, tp.travels DESC, p.full_name", (ids,)):
             people[r["trip_id"]].append({k: r[k] for k in ("name", "role", "travels", "position")})
     for t in trips:
-        for k in ("start_date", "end_date", "generated_start_date", "generated_end_date"):
+        for k in ("start_date", "end_date", "generated_start_date", "generated_end_date", "area_decide_by"):
             t[k] = str(t[k]) if t[k] else None
         t["combined"] = combined[t["id"]]
         t["participants"] = people[t["id"]][:60]
