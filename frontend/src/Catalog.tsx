@@ -1,3 +1,4 @@
+import { familyOf } from "./theme";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 type Position = { id: number; code: string; name: string; level: number; function_area: string };
@@ -143,6 +144,7 @@ export default function Catalog({ isAdmin }: { isAdmin: boolean }) {
             {data.event_types.map((e) => (
               <li key={e.id}>
                 <button className={e.id === selected ? "pick on" : "pick"} onClick={() => { setSelected(e.id); setEditing(null); }}>
+                  <i className="dot" style={{ background: familyOf(e.code).color }} />
                   {e.name}
                   {!e.active && <span className="muted"> (inactive)</span>}
                 </button>

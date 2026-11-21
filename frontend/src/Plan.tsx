@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
 import { AddTrip, TripPanel } from "./TripPanel";
+import Timeline from "./Timeline";
+import { Icon } from "./icons";
 
 type Row = { unit_id: number | null; label: string; months: number[] };
 type Summary = {
@@ -52,6 +54,7 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
   const [withCancelled, setWithCancelled] = useState(false);
   const [tick, setTick] = useState(0);
   const [warnings, setWarnings] = useState<WarningSet | null>(null);
+  const [view, setView] = useState<"timeline" | "heatmap">("timeline");
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/plan/${year}/summary`);
@@ -96,7 +99,10 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
           className="cellbtn"
           disabled={n === 0}
           aria-label={`${row.label}, ${MONTHS[i]}: ${n} trips`}
-          style={{ background: n ? `color-mix(in srgb, var(--accent) ${Math.round(18 + (n / max) * 72)}%, transparent)` : undefined }}
+          style={n ? ({
+            ["--heat-bg" as string]: `color-mix(in srgb, var(--brand) ${Math.round(12 + (n / max) * 88)}%, var(--surface))`,
+            ["--heat-ink" as string]: n / max > 0.45 ? "#fff" : "var(--ink)",
+          } as React.CSSProperties) : undefined}
           onClick={() => setSel({ row, month: i + 1, nationwide })}
         >
           {n || ""}
@@ -140,7 +146,7 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
       <section className="card">
         <div className="head">
           <div>
-            <h2>Plan {year}</h2>
+            <h2>Yearly plan</h2>
             {summary && (
               <p className="muted">
                 {STATUS_LABEL[summary.status] ?? summary.status} · {summary.totals.trips} trips
@@ -152,9 +158,9 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
           <div className="row">
             {summary && summary.totals.trips > 0 && (
               <a className="button secondary" href={`/api/plan/${year}/export.xlsx${withCancelled ? "?include=cancelled" : ""}`}
-                download>Export to Excel</a>
+                download><Icon name="download" size={16} className="ico" />Export to Excel</a>
             )}
-            {!adding && <button onClick={() => setAdding(true)}>Add a trip</button>}
+            {!adding && <button onClick={() => setAdding(true)}><Icon name="plus" size={16} className="ico" />Add a trip</button>}
           </div>
         </div>
         {summary && summary.totals.trips > 0 && (
@@ -188,6 +194,13 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
           <p className="muted">No plan yet.{canGenerate ? " Use Generate plan above." : ""}</p>
         )}
         {summary && summary.totals.trips > 0 && (
+          <>
+          <div className="segctl" role="group" aria-label="View" style={{ margin: "6px 0 14px" }}>
+            <button type="button" className={view === "timeline" ? "on" : ""} onClick={() => setView("timeline")}>Timeline</button>
+            <button type="button" className={view === "heatmap" ? "on" : ""} onClick={() => setView("heatmap")}>Heatmap by month</button>
+          </div>
+          {view === "timeline" && <Timeline year={year} summary={summary} tick={tick} onOpen={setOpenId} />}
+          {view === "heatmap" && (
           <div className="heatwrap">
             <table className="heat">
               <thead>
@@ -204,7 +217,10 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
                 </tr>
               </tbody>
             </table>
+            <div className="heat-legend">Fewer trips <span className="ramp" /> More trips · click a cell to list its trips</div>
           </div>
+          )}
+          </>
         )}
       </section>
 

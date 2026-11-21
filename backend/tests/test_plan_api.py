@@ -76,6 +76,11 @@ def test_summary_matches_the_trips(org):
     month = next(i + 1 for i, n in enumerate(cluster["months"]) if n)
     trips = org.get(f"/api/plan/2027/trips?unit_id={cluster['unit_id']}&month={month}", headers=ADMIN).json()
     assert len(trips) == cluster["months"][month - 1]
+    # every trip says which row of the calendar it belongs to and which event it is (the timeline colors by event)
+    assert all(t["event_code"] and t["row_unit_id"] for t in trips)
+    assert {t["row_unit_id"] for t in trips} == {cluster["unit_id"]}
+    nationwide = org.get("/api/plan/2027/trips?nationwide=true", headers=ADMIN).json()
+    assert nationwide and all(t["row_unit_id"] is None and t["place"] is None for t in nationwide)
     detail = org.get(f"/api/plan/trips/{trips[0]['id']}", headers=ADMIN).json()
     assert detail["participants"] and {"name", "role", "travels", "position"} <= set(detail["participants"][0])
 

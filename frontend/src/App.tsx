@@ -5,6 +5,9 @@ import MyPlan from "./MyPlan";
 import Org from "./Org";
 import Users from "./Users";
 import Plan from "./Plan";
+import Home, { Tab } from "./Home";
+import { Icon, Logo } from "./icons";
+import { initials, ROLE_LABEL } from "./theme";
 
 type Me = { signed_in: boolean; linked: boolean; has_access: boolean; name: string | null; roles: string[]; person_id: number | null };
 type State =
@@ -15,7 +18,7 @@ type State =
 
 export default function App() {
   const [state, setState] = useState<State>({ kind: "loading" });
-  const [tab, setTab] = useState<"home" | "myplan" | "org" | "catalog" | "plan" | "costs" | "users">("home");
+  const [tab, setTab] = useState<Tab>("home");
 
   const load = useCallback(async () => {
     try {
@@ -61,68 +64,103 @@ export default function App() {
   const canSeeOrg =
     state.kind === "ready" && state.me.roles.some((r) => r === "administrator" || r === "national_planner");
 
+  if (state.kind !== "ready" || !state.me.has_access) {
+    return (
+      <div className="auth">
+        <AuthArt />
+        <div className="auth-form" aria-live="polite">
+          {state.kind === "loading" && <div className="box"><p>Loading…</p></div>}
+          {state.kind === "error" && <div className="box"><h2>Something is wrong</h2><p className="problem">{state.message}</p></div>}
+          {state.kind === "signin" && <SignIn onDone={load} />}
+          {state.kind === "ready" && (
+            <div className="box">
+              <h2>You do not have access yet</h2>
+              <p>
+                Your sign-in worked, but your account is not linked to a travel planning role. Please ask
+                the Field Collections travel administrator to link your account.
+              </p>
+              <button className="secondary" onClick={signOut}>Sign out</button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const me = state.me;
+  const items: { id: Tab; label: string; icon: string; show: boolean }[] = [
+    { id: "home", label: "Home", icon: "home", show: true },
+    { id: "myplan", label: "My plan", icon: "calendar", show: hasPerson },
+    { id: "plan", label: "Plan", icon: "send", show: canSeePlan },
+    { id: "costs", label: "Costs", icon: "chart", show: canSeeCosts },
+    { id: "catalog", label: "Events and rules", icon: "sliders", show: true },
+    { id: "org", label: "Organization", icon: "org", show: canSeeOrg },
+    { id: "users", label: "Users", icon: "users", show: isAdmin },
+  ];
+  const titles: Record<Tab, string> = {
+    home: "Home", myplan: "My plan", plan: "Plan 2027", costs: "Cost estimate", catalog: "Events and rules", org: "Organization", users: "Users",
+  };
+
   return (
-    <main className="shell">
-      <header>
-        <h1>Travel Planner</h1>
-        <p className="tagline">Plan field travel early, together, and at lower cost.</p>
-      </header>
-      {hasAccess && (
-        <nav className="tabs" aria-label="Main">
-          <button className={tab === "home" ? "tab on" : "tab"} onClick={() => setTab("home")}>Home</button>
-          {hasPerson && (
-            <button className={tab === "myplan" ? "tab on" : "tab"} onClick={() => setTab("myplan")}>My plan</button>
-          )}
-          {canSeePlan && (
-            <button className={tab === "plan" ? "tab on" : "tab"} onClick={() => setTab("plan")}>Plan</button>
-          )}
-          {canSeeCosts && (
-            <button className={tab === "costs" ? "tab on" : "tab"} onClick={() => setTab("costs")}>Costs</button>
-          )}
-          <button className={tab === "catalog" ? "tab on" : "tab"} onClick={() => setTab("catalog")}>Events and rules</button>
-          {canSeeOrg && (
-            <button className={tab === "org" ? "tab on" : "tab"} onClick={() => setTab("org")}>Organization</button>
-          )}
-          {isAdmin && (
-            <button className={tab === "users" ? "tab on" : "tab"} onClick={() => setTab("users")}>Users</button>
-          )}
-        </nav>
-      )}
-      {hasPerson && tab === "myplan" && <MyPlan />}
-      {canSeeCosts && tab === "costs" && <Costs isAdmin={isAdmin} whole={canSeeOrg} />}
-      {hasAccess && tab === "catalog" && <Catalog isAdmin={isAdmin} />}
-      {canSeeOrg && tab === "org" && <Org isAdmin={isAdmin} />}
-      {isAdmin && tab === "users" && <Users myId={state.kind === "ready" ? state.me.person_id : null} />}
-      {canSeePlan && tab === "plan" && <Plan canGenerate={canSeeOrg} />}
-      <section className="card" aria-live="polite" hidden={hasAccess && tab !== "home"}>
-        {state.kind === "loading" && <p>Loading…</p>}
-        {state.kind === "error" && <p className="problem">{state.message}</p>}
-        {state.kind === "signin" && <SignIn onDone={load} />}
-        {state.kind === "ready" && !state.me.has_access && (
-          <>
-            <h2>You do not have access yet</h2>
-            <p>
-              Your sign-in worked, but your account is not linked to a travel planning role. Please ask
-              the Field Collections travel administrator to link your account.
-            </p>
-          </>
+    <div className="app">
+      <aside className="side">
+        <div className="brand">
+          <Logo size={38} />
+          <div><b>Travel Planner</b><small>Field Collections</small></div>
+        </div>
+        <ul className="nav" aria-label="Main">
+          {items.filter((i) => i.show).map((i) => (
+            <li key={i.id}>
+              <button className={tab === i.id ? "on" : ""} aria-current={tab === i.id ? "page" : undefined} onClick={() => setTab(i.id)}>
+                <Icon name={i.icon} size={19} />{i.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="usercard">
+          <span className="avatar" aria-hidden="true">{initials(me.name)}</span>
+          <span className="who"><b>{me.name ?? "Signed in"}</b><small>{ROLE_LABEL[me.roles[0]] ?? me.roles[0]}</small></span>
+          <button className="icon" onClick={signOut} aria-label="Sign out" title="Sign out"><Icon name="logout" size={18} /></button>
+        </div>
+      </aside>
+      <main className="content" key={tab}>
+        {tab !== "home" && (
+          <div className="page-head"><div><h1>{titles[tab]}</h1></div></div>
         )}
-        {state.kind === "ready" && state.me.has_access && (
-          <>
-            <h2>Welcome{state.me.name ? `, ${state.me.name}` : ""}</h2>
-            <p>Your role: {state.me.roles.join(", ")}</p>
-            <p className="muted">The planning calendar is coming in the next phase.</p>
-          </>
-        )}
-        {state.kind === "ready" && (
-          <p>
-            <button className="link" onClick={signOut}>
-              Sign out
-            </button>
-          </p>
-        )}
-      </section>
-    </main>
+        <div className="page">
+          {tab === "home" && <Home me={me} go={setTab} canSeePlan={canSeePlan} canSeeCosts={canSeeCosts} canSeeOrg={canSeeOrg} isAdmin={isAdmin} />}
+          {hasPerson && tab === "myplan" && <MyPlan />}
+          {canSeeCosts && tab === "costs" && <Costs isAdmin={isAdmin} whole={canSeeOrg} />}
+          {tab === "catalog" && <Catalog isAdmin={isAdmin} />}
+          {canSeeOrg && tab === "org" && <Org isAdmin={isAdmin} />}
+          {isAdmin && tab === "users" && <Users myId={me.person_id} />}
+          {canSeePlan && tab === "plan" && <Plan canGenerate={canSeeOrg} />}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function AuthArt() {
+  return (
+    <div className="auth-art">
+      <div style={{ display: "flex", alignItems: "center", gap: 12, position: "relative", zIndex: 1 }}>
+        <Logo size={44} /><b style={{ fontSize: 20 }}>Travel Planner</b>
+      </div>
+      <svg className="route" viewBox="0 0 560 320" aria-hidden="true">
+        <path d="M20 280C120 270 140 150 250 170S400 60 540 30" fill="none" stroke="#fff" strokeOpacity=".5" strokeWidth="3" strokeLinecap="round" strokeDasharray="2 12" />
+        {[[20, 280], [250, 170], [540, 30]].map(([x, y]) => (<g key={x}><circle cx={x} cy={y} r="16" fill="#fff" fillOpacity=".14" /><circle cx={x} cy={y} r="7" fill="#fff" /></g>))}
+      </svg>
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <h1>Meet in person. Plan it early.</h1>
+        <p>One shared plan for field travel, so teams can meet, combine trips and book at a lower cost.</p>
+        <ul>
+          <li><Icon name="calendar" size={18} />A yearly plan built from clear rules</li>
+          <li><Icon name="users" size={18} />Every change has a reason</li>
+          <li><Icon name="chart" size={18} />Costs in pesos, against the budget</li>
+        </ul>
+      </div>
+    </div>
   );
 }
 
@@ -149,7 +187,7 @@ function SignIn({ onDone }: { onDone: () => void }) {
 
   return (
     <form onSubmit={submit}>
-      <h2>Sign in</h2>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}><Logo size={34} /><h2 style={{ margin: 0 }}>Sign in</h2></div>
       <p className="muted">
         This is a trial installation. Enter your work e-mail and the access code you were given. Your
         e-mail address is not stored; only a one-way code derived from it is kept for the session.

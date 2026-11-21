@@ -49,9 +49,9 @@ export default function Org({ isAdmin }: { isAdmin: boolean }) {
           </p>
         )}
         {tree?.regions.map((region) => (
-          <div key={region.id} className="region">
+          <div key={region.id} className="region" style={{ ["--rc" as string]: `var(--c${(tree.regions.indexOf(region) % 7) + 1})` }}>
             <h3>
-              {region.name}
+              <span className="dot" style={{ background: "var(--rc)" }} />{region.name}
               {region.lead && <span className="muted"> · Regional Manager: {region.lead}</span>}
             </h3>
             <div className="clusters">

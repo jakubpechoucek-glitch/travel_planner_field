@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
 import CostSettings from "./CostSettings";
 import { money, signed } from "./money";
+import { ColumnChart, HBars, Meter, PairedBars, SegBar, Sparkline } from "./charts";
+import { Icon } from "./icons";
 
 type Row = { cost: number; trips: number; person_trips: number };
 type Forecast = {
@@ -19,8 +21,6 @@ type Forecast = {
   early_booking: { has_tiers: boolean; fares: number; fares_without_discount: number; target_days: number | null; fares_if_booked_ahead?: number; saving: number; factor_at_target?: number };
   assumptions: { missing_rates: string[]; assumed_mode_person_trips: number; modes_loaded: boolean; settings: Record<string, number | null>; tiers: { min_days_ahead: number; factor: number }[] };
 };
-
-const compact = (n: number) => (n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(Math.round(n)));
 
 export default function Costs({ isAdmin, whole }: { isAdmin: boolean; whole: boolean }) {
   const year = 2027;
@@ -60,25 +60,37 @@ export default function Costs({ isAdmin, whole }: { isAdmin: boolean; whole: boo
         </p>
       </details>
 
-      <section className="card">
-        <h2>Cost estimate {f.year}</h2>
-        {noCost && <p className="muted">There are no trips with travelers in the plan yet. Generate the plan first.</p>}
-        {!noCost && (
-          <>
-            <div className="cards">
-              <div className="stat"><span className="muted">Estimated cost</span><strong>{money(f.totals.cost)}</strong></div>
-              <div className="stat"><span className="muted">Trips · person-trips</span><strong>{f.totals.trips} · {f.totals.person_trips}</strong></div>
-              <div className="stat"><span className="muted">Average per person-trip</span><strong>{money(f.totals.avg_per_person_trip)}</strong></div>
-              <div className="stat"><span className="muted">By air or sea</span><strong>{Math.round((100 * f.totals.air_or_sea_person_trips) / f.totals.person_trips)}%</strong></div>
-              {f.budget && (
-                <div className="stat"><span className="muted">Budget (Field Collections)</span><strong>{money(f.budget.budget_total)}</strong>
-                  <span className={f.budget.difference > 0 ? "problem" : "good"}>
-                    The estimate is {money(Math.abs(f.budget.difference))} {f.budget.difference > 0 ? "above" : "below"} the budget
-                  </span></div>
-              )}
+      {noCost && <section className="card"><h2>Cost estimate {f.year}</h2><p className="muted">There are no trips with travelers in the plan yet. Generate the plan first.</p></section>}
+      {!noCost && (
+        <>
+          <section className="hero">
+            <div className="hero-grid">
+              <div>
+                <h1>Cost estimate {f.year}</h1>
+                <p>{f.totals.trips.toLocaleString("en-US")} trips · {f.totals.person_trips.toLocaleString("en-US")} person-trips · {money(f.totals.avg_per_person_trip)} on average</p>
+                {f.budget && (
+                  <p style={{ marginTop: 10 }}>
+                    <span className="pill"><Icon name={f.budget.difference > 0 ? "up" : "down"} size={14} />
+                      {money(Math.abs(f.budget.difference))} {f.budget.difference > 0 ? "above" : "below"} the budget of {money(f.budget.budget_total)}</span>
+                  </p>
+                )}
+              </div>
+              <div className="big"><span className="figure">{money(f.totals.cost)}</span><span className="cap">estimated travel cost</span></div>
             </div>
+          </section>
+          <div className="stats">
+            <div className="stat"><span className="label"><Icon name="send" size={16} />Trips</span><span className="value">{f.totals.trips.toLocaleString("en-US")}</span>
+              <span className="foot"><span>by month</span><Sparkline values={f.by_month.map((m) => m.trips)} /></span></div>
+            <div className="stat"><span className="label"><Icon name="users" size={16} />Person-trips</span><span className="value">{f.totals.person_trips.toLocaleString("en-US")}</span>
+              <span className="foot"><span>people × trips</span></span></div>
+            <div className="stat"><span className="label"><Icon name="plane" size={16} />By air or sea</span><span className="value">{Math.round((100 * f.totals.air_or_sea_person_trips) / f.totals.person_trips)}%</span>
+              <span className="foot"><span>of person-trips</span></span></div>
+            {f.budget && <div className={`stat ${f.budget.difference > 0 ? "bad" : "good"}`}><span className="label"><Icon name={f.budget.difference > 0 ? "alert" : "ok"} size={16} />Against the budget</span>
+              <span className="value">{signed(f.budget.difference)}</span><span className="foot"><span>{f.budget.difference > 0 ? "over budget" : "under budget"}</span></span></div>}
+          </div>
+          <section className="card">
             {(a.missing_rates.length > 0 || a.assumed_mode_person_trips > 0 || !a.modes_loaded) && (
-              <div className="note" role="status">
+              <div className="note" role="status" style={{ marginBottom: 14 }}>
                 <strong>Check the assumptions.</strong>
                 {!a.modes_loaded && <> No travel modes are loaded, so every trip between regions is counted as travel by land. </>}
                 {a.assumed_mode_person_trips > 0 && <> For {a.assumed_mode_person_trips} person-trips the home or the place is unknown, so they are counted as by land. </>}
@@ -86,20 +98,26 @@ export default function Costs({ isAdmin, whole }: { isAdmin: boolean; whole: boo
                 {isAdmin && <>Fix them under <em>Rates and travel modes</em> below.</>}
               </div>
             )}
-
             <h3>By month</h3>
-            <div className="bars" role="img" aria-label={`Estimated cost by month, from ${money(Math.min(...f.by_month.map((m) => m.cost)))} to ${money(max)}`}>
-              {f.by_month.map((m) => (
-                <div key={m.month} className="bar" title={`${m.month}: ${money(m.cost)} (${m.trips} trips)`}>
-                  <span className="value">{m.cost ? compact(m.cost) : ""}</span>
-                  <div className="fill" style={{ height: `${Math.round((m.cost / max) * 100)}%` }} />
-                  <span className="label">{m.month}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </section>
+            <ColumnChart ariaLabel={`Estimated cost by month, from ${money(Math.min(...f.by_month.map((m) => m.cost)))} to ${money(max)}`} format={money}
+              data={f.by_month.map((m) => ({ label: m.month.slice(0, 3), value: m.cost, tip: <><b>{m.month}</b><div>{money(m.cost)}</div><div className="t-muted">{m.trips} trips</div></> }))} />
+          </section>
+          <div className="home-grid" style={{ marginTop: 16 }}>
+            <section className="card">
+              <h3>Where the money goes</h3>
+              <SegBar format={money} parts={Object.entries(f.by_mode).map(([mode, v], i) => ({
+                label: `By ${mode}`, value: v.cost, color: ["var(--c1)", "var(--c2)", "var(--c3)"][i % 3],
+              }))} />
+              <h4>Top places</h4>
+              <HBars format={money} rows={f.by_place.map((p) => ({ label: p.place, value: p.cost, note: `${p.trips} ${p.trips === 1 ? "trip" : "trips"}` }))} limit={6} />
+            </section>
+            <section className="card">
+              <h3>By position</h3>
+              <HBars format={money} rows={f.by_position.map((p) => ({ label: p.position, value: p.cost, note: `${p.person_trips} person-trips` }))} limit={8} />
+            </section>
+          </div>
+        </>
+      )}
 
       {!noCost && f.budget && (
         <section className="card">
@@ -108,6 +126,10 @@ export default function Costs({ isAdmin, whole }: { isAdmin: boolean; whole: boo
             The budget counts <strong>person-trips</strong> (people × frequency) and prices each with its own formula. The estimate counts the people who travel on the planned trips.
             Differences show where the plan and the budget assume different things (number of trips, length of a trip, who travels).
           </p>
+          <PairedBars format={money} aLabel="Budget" bLabel="Estimate"
+            rows={f.budget.rows.filter((r) => r.budget_cost || r.forecast_cost).sort((x, y) => Math.max(y.budget_cost, y.forecast_cost) - Math.max(x.budget_cost, x.forecast_cost)).slice(0, 8)
+              .map((r) => ({ label: r.event, a: r.budget_cost, b: r.forecast_cost, delta: r.forecast_cost - r.budget_cost }))} />
+          <details style={{ marginTop: 14 }}><summary>Show all lines as a table</summary>
           <div className="heatwrap">
             <table className="trips money">
               <thead><tr><th>Event</th><th>Budget</th><th>Person-trips</th><th>Estimate</th><th>Person-trips</th><th>Estimate vs budget</th></tr></thead>
@@ -123,29 +145,13 @@ export default function Costs({ isAdmin, whole }: { isAdmin: boolean; whole: boo
                 <tr className="total"><td>Total</td><td>{money(f.budget.budget_total)}</td><td></td><td>{money(f.budget.forecast_total)}</td><td></td><td>{signed(f.budget.difference)}</td></tr>
               </tbody>
             </table>
-          </div>
+          </div></details>
           {f.budget.unmatched > 0 && <p className="note">{money(f.budget.unmatched)} of the budget is on lines that are not matched to an event (listed in the budget section below).</p>}
         </section>
       )}
       {!noCost && !f.budget && whole && (
         <section className="card"><h3>Plan against the budget</h3>
           <p className="muted">No budget lines are loaded yet.{isAdmin ? " Upload the budget workbook under Budget below." : " An administrator can load them."}</p></section>
-      )}
-
-      {!noCost && (
-        <details className="card">
-          <summary>Cost by place and by position</summary>
-          <div className="row top">
-            <table className="trips money">
-              <thead><tr><th>Place</th><th>Estimate</th><th>Trips</th></tr></thead>
-              <tbody>{f.by_place.map((p) => <tr key={p.place}><td>{p.place}</td><td>{money(p.cost)}</td><td>{p.trips}</td></tr>)}</tbody>
-            </table>
-            <table className="trips money">
-              <thead><tr><th>Position</th><th>Estimate</th><th>Person-trips</th></tr></thead>
-              <tbody>{f.by_position.map((p) => <tr key={p.position}><td>{p.position}</td><td>{money(p.cost)}</td><td>{p.person_trips}</td></tr>)}</tbody>
-            </table>
-          </div>
-        </details>
       )}
 
       {!noCost && (
@@ -165,6 +171,7 @@ export default function Costs({ isAdmin, whole }: { isAdmin: boolean; whole: boo
                 <strong>{money(f.early_booking.fares_if_booked_ahead ?? 0)}</strong>
                 {f.early_booking.saving > 0 ? <>: a saving of <strong className="good">{money(f.early_booking.saving)}</strong>.</> : <>: no saving.</>}
               </p>
+              <div style={{ margin: "6px 0 10px" }}><Meter value={f.early_booking.fares_if_booked_ahead ?? 0} max={f.early_booking.fares_without_discount || 1} label="Fares if booked early, as a share of fares without discount" /></div>
               <p className="muted">Without any discount the fares would be {money(f.early_booking.fares_without_discount)}. Discount tiers: {a.tiers.map((t) => `${t.min_days_ahead}+ days: ${Math.round((1 - t.factor) * 100)}% off`).join(", ")}.</p>
             </>
           )}

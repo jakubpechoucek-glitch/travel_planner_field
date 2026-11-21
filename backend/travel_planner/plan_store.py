@@ -255,8 +255,10 @@ def plan_trips(conn: Connection, year: int, unit_id: int | None, month: int | No
         clauses.append("t.event_type_id = %s")
         args.append(event_type_id)
     rows = conn.execute(
-        "SELECT t.id, t.title, t.start_date, t.end_date, t.status, t.source, t.notes, e.name AS event, e.code, "
-        "t.visited_org_unit_id, "
+        "SELECT t.id, t.title, t.start_date, t.end_date, t.status, t.source, t.notes, e.name AS event, "
+        "e.code AS event_code, "
+        "t.visited_org_unit_id, CASE u.kind WHEN 'local_office' THEN u.parent_id ELSE u.id END AS row_unit_id, "
+        "u.name AS place, "
         "(SELECT count(*) FROM trip_participant p WHERE p.trip_id = t.id AND p.travels) AS travelers, "
         "(SELECT count(*) FROM trip m WHERE m.merged_into_trip_id = t.id) AS merged_count, "
         "EXISTS (SELECT 1 FROM trip_change c WHERE c.trip_id = t.id AND c.change_type NOT IN ('generated', 'created')) "

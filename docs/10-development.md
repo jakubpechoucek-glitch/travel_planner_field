@@ -114,6 +114,16 @@ Once real administrators have a linked sign-in and the role, remove that setting
 
 The engine (`cost_engine.py`) is tested without a database in `backend/tests/test_cost_engine.py`, including the budget's unit prices; `test_costs.py` covers the database side.
 
+## 10.3h Visual design
+
+The interface uses one design system in `frontend/src/styles.css` (tokens for light and dark mode, chosen by the browser setting):
+
+- **Shell:** a dark sidebar with icons and the signed-in user (a scrolling top bar on phones), a dashboard on **Home** (greeting, days to the next trip, key figures, rule checks, setup progress for administrators), and a split sign-in page.
+- **Event families:** `frontend/src/theme.ts` groups event codes into seven families, each with one color of the validated categorical palette (area, region, Lakbay, company, Head of Field, training, other). The same colors are used on the plan timeline, in My plan and in the events list. Color never carries meaning alone: every use has a legend, a tooltip or a label.
+- **Plan timeline:** one row per area, a bar per trip (hatched = still proposed), filters by family, zoom by quarter, click to open the trip. It reads `GET /api/plan/{year}/trips`, which returns `event_code`, `place` and `row_unit_id` for this purpose. The monthly heatmap stays as a second view and uses one blue ramp.
+- **Charts** (`frontend/src/charts.tsx`): columns, ranked bars, paired bars (budget against estimate), a segmented bar, meters, sparklines and a progress ring, all with tooltips and text alternatives. Status colors always come with an icon and a label.
+- `GET /api/my/trips` also returns `event_code` per trip.
+
 ## 10.4 Configuration
 
 | Variable | Used in | Meaning |

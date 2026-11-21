@@ -1,3 +1,4 @@
+import { initials } from "./theme";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { api } from "./api";
 
@@ -130,7 +131,7 @@ export default function Users({ myId }: { myId: number | null }) {
                 {list.users.map((u) => (
                   <tr key={u.id} className={open === u.id ? "on" : ""}>
                     <td>
-                      <button className="link" onClick={() => setOpen(u.id)}>{u.full_name}</button>
+                      <span className="avatar s" aria-hidden="true" style={{ display: "inline-grid", marginRight: 8, verticalAlign: "middle" }}>{initials(u.full_name)}</span><button className="link" onClick={() => setOpen(u.id)}>{u.full_name}</button>
                       {u.employee_no && <span className="muted"> · {u.employee_no}</span>}
                       {!u.active && <span className="badge"> inactive</span>}
                     </td>

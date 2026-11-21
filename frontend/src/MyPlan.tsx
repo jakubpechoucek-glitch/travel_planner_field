@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
+import { Icon } from "./icons";
+import { daysFromToday, familyOf } from "./theme";
 
 type Person = { name: string; role: string; travels: boolean; position: string | null };
 type Trip = {
-  id: number; title: string; event: string; place: string | null; status: string; notes: string | null;
+  id: number; title: string; event: string; event_code: string; place: string | null; status: string; notes: string | null;
   start_date: string; end_date: string; generated_start_date: string | null; generated_end_date: string | null;
   cancel_reason: string | null; my_role: string; my_travels: boolean; organizer: string | null; combined: string[];
   last_change: { type: string; reason: string | null; category: string | null; at: string } | null;
@@ -126,11 +128,10 @@ export default function MyPlan() {
           {data.published && data.trips.length === 0 && (
             <p className="muted">You have no trips in the {data.year} plan.</p>
           )}
+          {data.year && data.trips.some((x) => x.status !== "cancelled") && <YearStrip year={data.year} trips={data.trips.filter((x) => x.status !== "cancelled")} />}
           {next && (
-            <div className="nexttrip" aria-label="Your next trip">
-              <span className="muted">Your next trip</span>
-              <strong>{next.title}</strong>
-              <span>{weekday(next.start_date)}, {range(next.start_date, next.end_date)} · {ROLE_TEXT[next.my_role] ?? "You travel"}</span>
+            <div className="note" aria-label="Your next trip">
+              <strong>Your next trip: {next.title}</strong> · {weekday(next.start_date)}, {range(next.start_date, next.end_date)} · {ROLE_TEXT[next.my_role] ?? "You travel"}
             </div>
           )}
         </section>
@@ -167,7 +168,7 @@ function TripCard({ t }: { t: Trip }) {
   // the generator adds "Includes X." to a combined trip; that is already shown as "Also held at this trip"
   const note = (t.notes ?? "").split(/(?<=\.)\s+/).filter((s) => s && !s.startsWith("Includes ")).join(" ");
   return (
-    <li className={`mytrip ${t.status === "cancelled" ? "cancelled" : ""}`}>
+    <li className={`mytrip ${t.status === "cancelled" ? "cancelled" : ""}`} style={{ ["--fam" as string]: familyOf(t.event_code).color }}>
       <div className="when" aria-hidden="true">
         <strong>{d(t.start_date).getDate()}</strong>
         <span>{d(t.start_date).toLocaleDateString("en-US", { month: "short" })}</span>
@@ -176,10 +177,15 @@ function TripCard({ t }: { t: Trip }) {
         <div className="titleline">
           <strong>{t.title}</strong>
           <span className={`badge status-${t.status}`} title={status.hint}>{status.label}</span>
+          {t.status !== "cancelled" && daysFromToday(t.end_date) >= 0 && (
+            <span className="pill brand"><Icon name="clock" size={13} />{daysFromToday(t.start_date) <= 0 ? "under way" : `in ${daysFromToday(t.start_date)} days`}</span>
+          )}
         </div>
-        <div className="muted">
-          {weekday(t.start_date)}, {range(t.start_date, t.end_date)}{t.place ? ` · ${t.place}` : ""} · {ROLE_TEXT[t.my_role] ?? "You travel"}
-          {t.organizer && t.my_role !== "organizer" ? ` · Organized by ${t.organizer}` : ""}
+        <div className="meta">
+          <span>{weekday(t.start_date)}, {range(t.start_date, t.end_date)}</span>
+          {t.place && <span><Icon name="map" size={13} /> {t.place}</span>}
+          <span className="pill"><Icon name={t.my_role === "host" ? "building" : t.my_role === "organizer" ? "users" : "plane"} size={13} />{ROLE_TEXT[t.my_role] ?? "You travel"}</span>
+          {t.organizer && t.my_role !== "organizer" && <span>Organized by {t.organizer}</span>}
         </div>
         {t.combined.length > 0 && <div className="muted">Also held at this trip: {t.combined.join(", ")}</div>}
         {t.status === "cancelled" && t.cancel_reason && <div className="note">Cancelled: {t.cancel_reason}</div>}
@@ -208,5 +214,31 @@ function TripCard({ t }: { t: Trip }) {
         )}
       </div>
     </li>
+  );
+}
+
+const MON = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+
+/** The whole year in one line: a mark per trip, in the color of its event family. */
+function YearStrip({ year, trips }: { year: number; trips: Trip[] }) {
+  const a = new Date(year, 0, 1).getTime();
+  const span = new Date(year + 1, 0, 1).getTime() - a;
+  const pos = (ms: number) => ((ms - a) / span) * 100;
+  const now = pos(Date.now());
+  return (
+    <div className="yearstrip" role="img" aria-label={`Your ${trips.length} trips across ${year}`}>
+      {MON.map((m, i) => (
+        <span key={i}>
+          {i > 0 && <i style={{ left: `${pos(new Date(year, i, 1).getTime())}%` }} />}
+          <span className="m" style={{ left: `${pos(new Date(year, i, 1).getTime())}%` }}>{m}</span>
+        </span>
+      ))}
+      {trips.map((t) => {
+        const s = pos(d(t.start_date).getTime());
+        const w = Math.max(1.2, pos(d(t.end_date).getTime() + 86400000) - s);
+        return <b key={t.id} title={`${t.title}: ${range(t.start_date, t.end_date)}`} style={{ left: `${s}%`, width: `${w}%`, ["--bar" as string]: familyOf(t.event_code).color }} />;
+      })}
+      {now > 0 && now < 100 && <span className="now" style={{ left: `${now}%` }} />}
+    </div>
   );
 }
