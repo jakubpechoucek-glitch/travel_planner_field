@@ -60,6 +60,17 @@ curl -X POST "http://localhost:8000/api/admin/plan/2027/generate?commit=false"  
 
 A rule is held every N years with `params.every_n_years` and `params.first_year` (quota and cadence rules only); the generator skips the event in the other years and reports it under *skipped*.
 
+## 10.3c-4 Suggesting a change (API)
+
+| Endpoint | Who | Purpose |
+|----------|-----|---------|
+| `POST /api/my/trips/{id}/requests` `{kind, message, proposed_start?, proposed_end?}` | a person on the trip | Suggest a change (`move`, `cannot_attend`, `other`); one open suggestion per trip |
+| `POST /api/my/requests/{id}/withdraw` | the requester | Withdraw an open suggestion |
+| `GET /api/plan/{year}/requests?state=open` | planners (own scope) | Suggestions for the planner's trips, with the number of open ones; `state` is `open`, `accepted`, `declined`, `withdrawn` or `all` |
+| `POST /api/plan/requests/{id}/decide` `{decision, note?}` | the planner of the trip | `accepted` or `declined` (a note is required to decline) |
+
+`GET /api/my/trips` returns the person's latest suggestion for each trip as `my_request`. `GET /api/plan-years` is open to everyone with access.
+
 ## 10.3c-3 Synergy suggestions (API)
 
 | Endpoint | Who | Purpose |

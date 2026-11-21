@@ -54,7 +54,8 @@ Progress:
 - [x] **Events held every N years** (for example a biennial conference or an off-year meeting): *Which years* setting on quota and cadence rules, plan years opened from the Plan page, year selector
 - [x] **Choosing the area later** (Special Area visits hold a region slot) and **follow-up of actions** (up to three per trip, closed within 30 days), with the *Follow-ups* view
 - [x] **Synergy suggestions** (same place, close dates; dismissable)
-- [ ] People timeline; "suggest a change" from a supervisor to the manager
+- [x] **"Suggest a change"** from a supervisor to the manager (My plan → Plan → Suggestions)
+- [ ] People timeline
 
 **Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.
 

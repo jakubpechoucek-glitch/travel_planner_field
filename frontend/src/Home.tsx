@@ -11,6 +11,7 @@ type MyTrips = { linked: boolean; published: boolean; year: number | null; trips
 type Summary = { status: string; totals: { trips: number; merged: number; manual: number }; regions: { rows: { months: number[] }[] }[]; nationwide: { months: number[] } };
 type Warnings = { total: number };
 type FollowUps = { counts: Record<string, number> };
+type ReqCount = { open: number };
 type Forecast = { totals: { cost: number; person_trips: number }; by_month: { cost: number }[]; budget: { budget_total: number } | null };
 
 const greeting = () => {
@@ -26,11 +27,13 @@ export default function Home({ year, me, go, canSeePlan, canSeeCosts, canSeeOrg,
   const [warn, setWarn] = useState<Warnings | null>(null);
   const [cost, setCost] = useState<Forecast | null>(null);
   const [follow, setFollow] = useState<FollowUps | null>(null);
+  const [reqs, setReqs] = useState<ReqCount | null>(null);
 
   useEffect(() => {
     if (me.person_id !== null) void api<MyTrips>(`/api/my/trips?year=${year}`).then((r) => r.ok && setMine(r.data));
     if (canSeePlan) void api<Summary>(`/api/plan/${year}/summary`).then((r) => r.ok && setPlan(r.data));
     if (canSeeOrg) void api<Warnings>(`/api/plan/${year}/warnings`).then((r) => r.ok && setWarn(r.data));
+    if (canSeePlan) void api<ReqCount>(`/api/plan/${year}/requests`).then((r) => r.ok && setReqs(r.data));
     if (canSeePlan) void api<FollowUps>(`/api/plan/${year}/follow-ups`).then((r) => r.ok && setFollow(r.data));
     if (canSeeCosts) void api<Forecast>(`/api/cost/${year}/forecast`).then((r) => r.ok && setCost(r.data));
   }, [year, me.person_id, canSeePlan, canSeeOrg, canSeeCosts]);
@@ -103,6 +106,12 @@ export default function Home({ year, me, go, canSeePlan, canSeeCosts, canSeeOrg,
         </div>
       )}
 
+      {reqs && reqs.open > 0 && (
+        <div className="note no-print" style={{ marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+          <span><strong>Suggestions:</strong> {reqs.open} {reqs.open === 1 ? "person has" : "people have"} suggested a change and {reqs.open === 1 ? "is" : "are"} waiting for an answer.</span>
+          <button className="link" onClick={() => go("plan")}>Open the plan</button>
+        </div>
+      )}
       {follow && (follow.counts.overdue ?? 0) + (follow.counts.missing ?? 0) + (follow.counts.open ?? 0) > 0 && (
         <div className={`note no-print`} style={{ marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
           <span>

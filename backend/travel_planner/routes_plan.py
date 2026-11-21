@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from . import actions, plan_export, synergy
+from . import actions, change_requests, plan_export, synergy
 from . import plan_store as store
 from . import trip_edit as edit
 from .access import allowed_units, has_plan_access
@@ -27,6 +27,12 @@ planner = require_roles("administrator", "national_planner")
 
 def plan_access(identity: Identity = Depends(resolve_identity)) -> Identity:
     if not has_plan_access(identity):
+        raise HTTPException(status_code=403, detail="You do not have permission to do this.")
+    return identity
+
+
+def any_access(identity: Identity = Depends(resolve_identity)) -> Identity:
+    if not identity.has_access:
         raise HTTPException(status_code=403, detail="You do not have permission to do this.")
     return identity
 
@@ -88,7 +94,7 @@ class YearBody(BaseModel):
 
 
 @router.get("/plan-years")
-def plan_years(request: Request, _: Identity = Depends(plan_access)) -> list[dict]:
+def plan_years(request: Request, _: Identity = Depends(any_access)) -> list[dict]:
     return _db(request, store.list_plan_years)
 
 
@@ -211,6 +217,21 @@ def add_action(trip_id: int, body: actions.ActionIn, request: Request, who: Iden
 def update_action(action_id: int, body: actions.ActionUpdate, request: Request,
                   who: Identity = Depends(plan_access)) -> dict:
     return _db(request, lambda conn, allowed: actions.update_action(conn, action_id, body, who, allowed),
+               commit=True, who=who, scoped=True)
+
+
+@router.get("/plan/{year}/requests")
+def change_request_list(year: int, request: Request,
+                        state: str = Query("open", pattern="^(open|accepted|declined|withdrawn|all)$"),
+                        who: Identity = Depends(plan_access)) -> dict:
+    return _db(request, lambda conn, allowed: change_requests.list_requests(conn, year, allowed, state),
+               who=who, scoped=True)
+
+
+@router.post("/plan/requests/{request_id}/decide")
+def decide_request(request_id: int, body: change_requests.DecideIn, request: Request,
+                   who: Identity = Depends(plan_access)) -> dict:
+    return _db(request, lambda conn, allowed: change_requests.decide(conn, request_id, body, who, allowed),
                commit=True, who=who, scoped=True)
 
 

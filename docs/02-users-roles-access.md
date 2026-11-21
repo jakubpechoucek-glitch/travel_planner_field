@@ -11,7 +11,7 @@ relevant, a **scope** (the part of the organization the role applies to).
 
 | Role | Typical person | Scope | Can view | Can edit |
 |------|----------------|-------|----------|----------|
-| **Viewer** | Field supervisor | Self | Own trips and trips they are invited to | Mark own trip as done; comment |
+| **Viewer** | Field supervisor | Self | Own trips and trips they are invited to | Mark own trip as done; comment; **suggest a change** to a trip they are on (the planner decides) |
 | **Area planner** | Area manager | Own cluster | Cluster calendar, supervisors' trips | Trips organized by the AM and the AM's supervisors; reasons required for overrides |
 | **Regional planner** | Regional manager | Own region(s) | Region calendar, all AMs and clusters | Trips of the RM and AMs in the region |
 | **National planner** | Head of Field | All Field Collections | Everything; compliance and cost dashboards | All trips; approve plan publication |

@@ -196,6 +196,15 @@ Trips whose area is chosen later, and the follow-up of actions after a visit, ar
 In the plan workflow: after generation, a Special Area visit holds a region slot; the planner chooses the area in the trip panel before the decision date (**Plan → trip → Choose area**);
 after the visit the top actions are recorded and closed under **Follow-up** in the trip panel, and tracked in the **Follow-ups** view. Overdue areas and an over-used mix of areas appear in the plan checks.
 
+## 5.11 Suggesting a change
+
+Only managers change the plan, but the people on a trip know things the plan does not (an exam week, a leave, a holiday). In **My plan**, a person on a trip chooses **Suggest a change**:
+*Move the trip* (with the preferred start date; the end date keeps the length), *I cannot take part*, or *Something else*, with a short reason (3 to 500 characters; the form asks people not to write contact details).
+
+- A suggestion changes nothing in the plan. It goes to the planner who looks after the trip: administrators and national planners for every trip, regional and area planners for trips in their scope. It appears under **Plan → Suggestions** (with the number of open ones) and as a note on Home.
+- The planner opens the trip and makes the change as usual (with a reason), then **marks the suggestion accepted** (optional note, for example the new date), or **declines** it with a reason. The person reads the answer on the trip card in My plan.
+- A person has at most one open suggestion per trip and can **withdraw** it. Only trips that have not taken place yet, in a plan that is in review or published, can get a suggestion. Everything is written to the audit log; nothing is sent by e-mail.
+
 ## 5.8 In-app help
 
 Every screen has a **Help** panel and contextual tooltips in American English, covering:

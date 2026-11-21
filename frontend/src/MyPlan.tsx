@@ -7,10 +7,11 @@ type Person = { name: string; role: string; travels: boolean; position: string |
 type Trip = {
   id: number; title: string; event: string; event_code: string; place: string | null; status: string; notes: string | null;
   start_date: string; end_date: string; generated_start_date: string | null; generated_end_date: string | null;
-  cancel_reason: string | null; area_pending?: boolean; area_decide_by?: string | null; my_role: string; my_travels: boolean; organizer: string | null; combined: string[];
+  cancel_reason: string | null; area_pending?: boolean; my_request?: MyRequest | null; area_decide_by?: string | null; my_role: string; my_travels: boolean; organizer: string | null; combined: string[];
   last_change: { type: string; reason: string | null; category: string | null; at: string } | null;
   participants: Person[]; participant_count: number;
 };
+type MyRequest = { id: number; kind: string; message: string; status: string; proposed_start: string | null; proposed_end: string | null; decision_note: string | null };
 type Data = {
   linked: boolean; year: number | null; years: number[]; plan_status?: string; published: boolean; trips: Trip[];
 };
@@ -44,6 +45,8 @@ export default function MyPlan() {
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
 
+  const [tick, setTick] = useState(0);
+  const reload = () => setTick((n) => n + 1);
   useEffect(() => {
     let live = true;
     void api<Data>(`/api/my/trips${year ? `?year=${year}` : ""}`).then((r) => {
@@ -51,7 +54,7 @@ export default function MyPlan() {
       if (r.ok) { setData(r.data); setError(null); } else setError(r.error);
     });
     return () => { live = false; };
-  }, [year]);
+  }, [year, tick]);
 
   const today = new Date().toISOString().slice(0, 10);
   const groups = useMemo(() => {
@@ -84,7 +87,10 @@ export default function MyPlan() {
           or changed, you see the date it was first planned for and the reason. <strong>Add to my calendar</strong> downloads your trips as a file that Outlook, Google Calendar
           and phone calendars can open.
         </p>
-        <p>To change a trip, ask your area manager. Only managers can change the plan.</p>
+        <p>
+          To change a trip, use <strong>Suggest a change</strong> on its card: you can ask to move the trip or say that you cannot take part, and give a reason. Your manager reads it and answers; you see the answer on the card.
+          The plan changes only when your manager changes it. Please do not write phone numbers or e-mail addresses.
+        </p>
       </details>
 
       {!data.linked && (
@@ -140,28 +146,29 @@ export default function MyPlan() {
       {[...groups.byMonth.entries()].map(([month, trips]) => (
         <section key={month} className="card">
           <h3>{month}</h3>
-          <ul className="mytrips">{trips.map((t) => <TripCard key={t.id} t={t} />)}</ul>
+          <ul className="mytrips">{trips.map((t) => <TripCard key={t.id} t={t} onChanged={reload} />)}</ul>
         </section>
       ))}
 
       {groups.earlier.length > 0 && (
         <details className="card">
           <summary>Earlier trips ({groups.earlier.length})</summary>
-          <ul className="mytrips">{groups.earlier.map((t) => <TripCard key={t.id} t={t} />)}</ul>
+          <ul className="mytrips">{groups.earlier.map((t) => <TripCard key={t.id} t={t} onChanged={reload} />)}</ul>
         </details>
       )}
       {groups.cancelled.length > 0 && (
         <details className="card">
           <summary>Cancelled trips ({groups.cancelled.length})</summary>
-          <ul className="mytrips">{groups.cancelled.map((t) => <TripCard key={t.id} t={t} />)}</ul>
+          <ul className="mytrips">{groups.cancelled.map((t) => <TripCard key={t.id} t={t} onChanged={reload} />)}</ul>
         </details>
       )}
     </>
   );
 }
 
-function TripCard({ t }: { t: Trip }) {
+function TripCard({ t, onChanged }: { t: Trip; onChanged: () => void }) {
   const [open, setOpen] = useState(false);
+  const [asking, setAsking] = useState(false);
   const status = STATUS[t.status] ?? { label: t.status, hint: "" };
   const moved = t.generated_start_date && (t.generated_start_date !== t.start_date || t.generated_end_date !== t.end_date);
   const others = t.participants.filter((p) => p.name);
@@ -197,6 +204,7 @@ function TripCard({ t }: { t: Trip }) {
           </div>
         )}
         {note && <div>{note}</div>}
+        <SuggestChange t={t} asking={asking} setAsking={setAsking} onChanged={onChanged} />
         {others.length > 0 && (
           <>
             <button type="button" className="link" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -240,6 +248,65 @@ function YearStrip({ year, trips }: { year: number; trips: Trip[] }) {
         return <b key={t.id} title={`${t.title}: ${range(t.start_date, t.end_date)}`} style={{ left: `${s}%`, width: `${w}%`, ["--bar" as string]: familyOf(t.event_code).color }} />;
       })}
       {now > 0 && now < 100 && <span className="now" style={{ left: `${now}%` }} />}
+    </div>
+  );
+}
+
+const REQ_KIND: Record<string, string> = { move: "Move the trip", cannot_attend: "I cannot take part", other: "Something else" };
+const REQ_STATUS: Record<string, { label: string; tone: string }> = {
+  open: { label: "Waiting for your manager", tone: "warn" }, accepted: { label: "Accepted", tone: "good" },
+  declined: { label: "Declined", tone: "bad" }, withdrawn: { label: "Withdrawn", tone: "" },
+};
+
+/** Ask the planner to move the trip or to take you off it. The plan changes only when the planner decides so. */
+function SuggestChange({ t, asking, setAsking, onChanged }: { t: Trip; asking: boolean; setAsking: (b: boolean) => void; onChanged: () => void }) {
+  const [kind, setKind] = useState("move");
+  const [message, setMessage] = useState("");
+  const [start, setStart] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const today = new Date().toISOString().slice(0, 10);
+  if (t.status === "cancelled" || t.end_date < today) return null;
+  const req = t.my_request;
+  const send = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const r = await api(`/api/my/trips/${t.id}/requests`, "POST", { kind, message, proposed_start: kind === "move" ? start || undefined : undefined });
+    if (!r.ok) return setError(r.error);
+    setAsking(false); setMessage(""); setStart(""); setError(null); onChanged();
+  };
+  const withdraw = async () => {
+    const r = await api(`/api/my/requests/${req!.id}/withdraw`, "POST");
+    if (!r.ok) return setError(r.error);
+    onChanged();
+  };
+  return (
+    <div style={{ marginTop: 6 }}>
+      {req && (
+        <div className="note">
+          <strong>Your suggestion:</strong> {REQ_KIND[req.kind] ?? req.kind}
+          {req.proposed_start && ` (${range(req.proposed_start, req.proposed_end ?? req.proposed_start)})`}: “{req.message}”{" "}
+          <span className={`pill ${REQ_STATUS[req.status]?.tone ?? ""}`}>{REQ_STATUS[req.status]?.label ?? req.status}</span>
+          {req.decision_note && <div>Answer: {req.decision_note}</div>}
+          {req.status === "open" && <button type="button" className="link" onClick={withdraw}>Withdraw</button>}
+        </div>
+      )}
+      {(!req || req.status !== "open") && !asking && (
+        <button type="button" className="link" onClick={() => setAsking(true)}>Suggest a change</button>
+      )}
+      {asking && (
+        <form className="subform" onSubmit={send}>
+          <p className="muted" style={{ margin: 0 }}>Your manager reads this and decides. The plan does not change until then. Please do not write phone numbers or e-mail addresses.</p>
+          <label>What would you like?
+            <select value={kind} onChange={(e) => setKind(e.target.value)}>
+              {Object.entries(REQ_KIND).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+          </label>
+          {kind === "move" && <label>Preferred start date<input type="date" required value={start} onChange={(e) => setStart(e.target.value)} /></label>}
+          <label>Why?<textarea required minLength={3} maxLength={500} rows={3} value={message} onChange={(e) => setMessage(e.target.value)} /></label>
+          {error && <p className="problem">{error}</p>}
+          <p className="row"><button type="submit">Send suggestion</button><button type="button" className="link" onClick={() => setAsking(false)}>Cancel</button></p>
+        </form>
+      )}
+      {!asking && error && <p className="problem">{error}</p>}
     </div>
   );
 }

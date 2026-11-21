@@ -107,6 +107,7 @@ Each chapter lists what the role can do and walks through the typical tasks. Hig
 
 - See every trip you take part in: trips you **organize**, trips you **travel** on, and visits to your team where you are the **host**.
 - See the **next trip** and the year at a glance on the colored **year strip**; the color shows the kind of event.
+- **Suggest a change** to a trip that has not taken place yet (see below).
 - Read the **status** of each trip: Proposed (planned by the rules, not yet confirmed), Confirmed, Done or Cancelled.
 - See the **original date and the reason** whenever a trip was moved or changed.
 - See **who else** is on a trip (button *Who is on this trip*).
@@ -119,6 +120,17 @@ Each chapter lists what the role can do and walks through the typical tasks. Hig
 2. Select **Who is on this trip** on a card to see the people, their positions and who organizes.
 3. Select **Add to my calendar**, open the downloaded file and confirm in your calendar program.
 4. If you have several plan years, choose the year in the **Year** list.
+
+### Suggesting a change
+
+You know things the plan does not: an exam week, a leave, a holiday. Your manager decides, but you can tell them.
+
+1. On the card of the trip, select **Suggest a change**.
+2. Choose **Move the trip** (and the date you would prefer), **I cannot take part**, or **Something else**.
+3. Write a short reason and select **Send suggestion**. Please do not write phone numbers or e-mail addresses.
+4. The card shows **Waiting for your manager**. You can **Withdraw** it. When your manager answers, you see **Accepted** or **Declined** and the answer. You can have one open suggestion per trip.
+
+> **Note** A suggestion does not change the plan. The plan changes only when your manager changes the trip, and the trip then shows the new date and the reason.
 
 > **Note** You see your trips once the plan is published. Until then the page says so. To change a trip, ask your area manager; supervisors cannot change the plan.
 
@@ -169,6 +181,15 @@ Visits such as the Special Area visit, the Regional Field Meeting and the Head o
 1. Open the trip and go to **Follow-up**. Type the action under **New action**, optionally set a due date (the default is 30 days after the trip), and select **Add action**.
 2. When an action is done, select **Mark done** and add a short note. **Drop** removes an action that is no longer needed and frees a place; **Reopen** brings it back.
 3. Open **Plan → Follow-ups** to see all trips with a follow-up: *Late*, *No actions yet*, *In progress*, *Not yet* and *Closed*. Late ones come first. Home shows a short summary.
+
+### Answering suggestions
+
+People on your trips can suggest a change in My plan. Open **Plan → Suggestions**: the number in brackets is how many wait for an answer, and Home shows a note too.
+
+1. Read each suggestion: who, which trip, what they ask (for a move, the date they prefer) and why.
+2. Select **Open the trip** and make the change as usual (**Change this trip**, with a reason).
+3. Back in **Suggestions**, select **Mark as accepted** and add a short note, for example the new date. Or select **Decline** and say why; a reason is required.
+4. The person sees your answer on the trip card. Tick **Show answered suggestions too** to see earlier ones.
 
 ### Synergies: travel once instead of twice
 
@@ -418,6 +439,8 @@ The starting catalog includes events that give the Head of Field time on the gro
 | Why does the cost page not show a budget? | Only administrators and national planners see the budget, and it must be loaded first. |
 | Why is an event missing from the generated plan? | It has no yearly quota or cadence rule, it is held only every second year and this is an off year, or the place does not have enough clusters for its rotation rule. The Generate preview lists these cases. |
 | Why does a trip show a whole region instead of an area? | Its area is chosen later. Planners choose it in the trip before the date shown (section 4.2). |
+| I cannot go on a trip. What do I do? | Open My plan, select Suggest a change on the trip and choose I cannot take part. Your manager decides. |
+| Where do I see the answer to my suggestion? | On the trip card in My plan: Accepted or Declined, with the answer. |
 | Why does the application suggest moving a trip? | Another trip goes to the same place within a few days (Plan → Synergies). It is only a hint: you can dismiss it. |
 | Where do I see actions that are still open? | Plan → Follow-ups lists the trips with open or missing actions; Home shows a summary. |
 | Where is the plan for next year? | An administrator or national planner opens it with Plan → Open plan year. Then choose it in the Plan year list. |

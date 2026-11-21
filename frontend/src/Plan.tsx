@@ -4,6 +4,7 @@ import { AddTrip, TripPanel } from "./TripPanel";
 import Timeline from "./Timeline";
 import FollowUps from "./FollowUps";
 import Synergies from "./Synergies";
+import Requests from "./Requests";
 import { Icon } from "./icons";
 
 type Row = { unit_id: number | null; label: string; months: number[] };
@@ -59,7 +60,7 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
   const [withCancelled, setWithCancelled] = useState(false);
   const [tick, setTick] = useState(0);
   const [warnings, setWarnings] = useState<WarningSet | null>(null);
-  const [view, setView] = useState<"timeline" | "heatmap" | "followups" | "synergies">("timeline");
+  const [view, setView] = useState<"timeline" | "heatmap" | "followups" | "synergies" | "requests">("timeline");
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/plan/${year}/summary`);
@@ -78,6 +79,13 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
   useEffect(() => {
     if (openId !== null) setTimeout(() => document.getElementById("trip-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   }, [openId]);
+
+  const [openRequests, setOpenRequests] = useState(0);
+  const loadRequests = useCallback(async () => {
+    const r = await api<{ open: number }>(`/api/plan/${year}/requests`);
+    if (r.ok) setOpenRequests(r.data.open);
+  }, [year]);
+  useEffect(() => { void loadRequests(); }, [loadRequests, tick]);
 
   const nextYear = years.length ? Math.max(...years.map((y) => y.year)) + 1 : year + 1;
   const openYear = async () => {
@@ -146,6 +154,9 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
         <p>
           <strong>Plan years.</strong> Use the <em>Plan year</em> list at the top to switch years. <em>Open plan year</em> adds the next year as an empty draft. An event that is held only every
           second year (set in Events and rules) is planned in its years only; in the other years the preview lists it as <em>not held in that year</em>.
+        </p>
+        <p>
+          <strong>Suggestions.</strong> People on a trip can suggest a change in My plan (a new date, or that they cannot take part). The <em>Suggestions</em> view lists those for your trips. Make the change in the trip, then mark the suggestion accepted, or decline it with a reason; the person sees your answer.
         </p>
         <p>
           <strong>Synergies.</strong> The <em>Synergies</em> view lists trips to the same place that are a few days apart (you choose how many). People who travel on both are shown first. Open a trip to move it, or dismiss a suggestion that does not fit.
@@ -234,9 +245,11 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
             <button type="button" className={view === "heatmap" ? "on" : ""} onClick={() => setView("heatmap")}>Heatmap by month</button>
             <button type="button" className={view === "followups" ? "on" : ""} onClick={() => setView("followups")}>Follow-ups</button>
             <button type="button" className={view === "synergies" ? "on" : ""} onClick={() => setView("synergies")}>Synergies</button>
+            <button type="button" className={view === "requests" ? "on" : ""} onClick={() => setView("requests")}>Suggestions{openRequests > 0 ? ` (${openRequests})` : ""}</button>
           </div>
           {view === "followups" && <FollowUps year={year} tick={tick} onOpen={setOpenId} />}
           {view === "synergies" && <Synergies year={year} tick={tick} onOpen={setOpenId} />}
+          {view === "requests" && <Requests year={year} tick={tick} onOpen={setOpenId} onChanged={() => void loadRequests()} />}
           {view === "timeline" && <Timeline year={year} summary={summary} tick={tick} onOpen={setOpenId} />}
           {view === "heatmap" && (
           <div className="heatwrap">

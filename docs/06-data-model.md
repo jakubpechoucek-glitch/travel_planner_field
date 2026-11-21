@@ -134,6 +134,8 @@ and the table `trip_action` (trip, title, due date, status `open`/`done`/`droppe
 
 Migration `0010_synergy_dismissal.sql` adds `synergy_dismissal` (a pair of trips a planner dismissed as a synergy suggestion, with an optional reason).
 
+Migration `0011_change_requests.sql` adds `change_request` (a suggestion from a person on a trip: kind `move`, `cannot_attend` or `other`, message, preferred dates, status `open`/`accepted`/`declined`/`withdrawn`, who decided, when and the note; at most one open request per person and trip).
+
 ## 6.8 Migrations
 
 Migration `0004_plan_generation.sql` adds `event_type_position.travels` (a visited team is a host, not a traveler) and `blackout_period.caused_by_event_type_id` (the event held in that period, for example the conference), and corrects two seed rules (see [open questions](09-open-questions.md#94-catalog-assumptions)).

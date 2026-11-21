@@ -12,6 +12,8 @@ from typing import Any
 
 from psycopg import Connection
 
+from . import change_requests
+
 VISIBLE_STATUSES = ("published", "closed")
 
 
@@ -61,7 +63,9 @@ def my_trips(conn: Connection, person_id: int | None, year: int | None, planner:
             "LEFT JOIN position pos ON pos.id = a.position_id WHERE tp.trip_id = ANY(%s) "
             "ORDER BY (tp.role = 'organizer') DESC, tp.travels DESC, p.full_name", (ids,)):
             people[r["trip_id"]].append({k: r[k] for k in ("name", "role", "travels", "position")})
+    mine = change_requests.my_requests(conn, person_id, ids)
     for t in trips:
+        t["my_request"] = mine.get(t["id"])
         for k in ("start_date", "end_date", "generated_start_date", "generated_end_date", "area_decide_by"):
             t[k] = str(t[k]) if t[k] else None
         t["combined"] = combined[t["id"]]
