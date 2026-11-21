@@ -113,7 +113,20 @@ are still `generated` and unedited.
 - The audit log records who changed what, not what they viewed.
 - Retention: trips and history are kept for the life of the plan year plus the period required by company policy *(to be confirmed)*.
 
-## 6.7 Migrations
+## 6.7 Cost tables
+
+Migration `0006_costs.sql` adds the cost model (the existing `cost_rate` table holds the rate card, seeded from the 2027 budget):
+
+| Table | Purpose |
+|-------|---------|
+| `cost_rate` | Air fare, sea fare, hotel per night, per diem and local transport by mode and position, with valid-from and valid-to dates |
+| `travel_mode` | How people travel from one region to another (land, air, sea) |
+| `travel_mode_override` | A place that needs another mode, from anywhere or from one region |
+| `app_setting` | Where the Head of Field is based and where nationwide events are held |
+| `booking_discount` | Early-booking tiers (days ahead and a factor on the fare); empty until the business enters them |
+| `budget_line` | The budget lines of a plan year, each matched to an event of the catalog |
+
+## 6.8 Migrations
 
 Migration `0004_plan_generation.sql` adds `event_type_position.travels` (a visited team is a host, not a traveler) and `blackout_period.caused_by_event_type_id` (the event held in that period, for example the conference), and corrects two seed rules (see [open questions](09-open-questions.md#94-catalog-assumptions)).
 

@@ -134,3 +134,16 @@ ul.mytrips { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; 
 .badge.status-generated { color: #b27700; } .badge.status-planned, .badge.status-approved { color: #1b7f3b; } .badge.status-cancelled { color: var(--danger); }
 @media (max-width: 560px) { .mytrip { grid-template-columns: 44px 1fr; } }
 a.button.secondary { background: var(--surface); color: var(--accent); border: 1px solid var(--accent); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 12px 0; }
+.stat { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; }
+.stat strong { font-size: 22px; }
+.bars { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; height: 180px; align-items: end; margin: 8px 0 4px; }
+.bar { display: grid; grid-template-rows: 16px 1fr 16px; height: 100%; text-align: center; font-size: 11px; color: var(--muted); }
+.bar .fill { align-self: end; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; opacity: .85; }
+.bar .value { font-size: 10px; }
+table.money td:not(:first-child), table.money th:not(:first-child) { text-align: right; }
+table.money tr.total td { font-weight: 700; border-top: 2px solid var(--border); }
+table.money tr.ended td { color: var(--muted); }
+table.modes td, table.modes th { text-align: center; }
+input.inline { width: 4.5em; padding: 4px 6px; }
+.row.top { align-items: start; }

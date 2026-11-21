@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Catalog from "./Catalog";
+import Costs from "./Costs";
 import MyPlan from "./MyPlan";
 import Org from "./Org";
 import Users from "./Users";
@@ -14,7 +15,7 @@ type State =
 
 export default function App() {
   const [state, setState] = useState<State>({ kind: "loading" });
-  const [tab, setTab] = useState<"home" | "myplan" | "org" | "catalog" | "plan" | "users">("home");
+  const [tab, setTab] = useState<"home" | "myplan" | "org" | "catalog" | "plan" | "costs" | "users">("home");
 
   const load = useCallback(async () => {
     try {
@@ -53,6 +54,8 @@ export default function App() {
   const hasAccess = state.kind === "ready" && state.me.has_access;
   const hasPerson = hasAccess && state.kind === "ready" && state.me.person_id !== null;
   const isAdmin = state.kind === "ready" && state.me.roles.includes("administrator");
+  const canSeeCosts =
+    state.kind === "ready" && state.me.roles.some((r) => ["administrator", "national_planner", "regional_planner"].includes(r));
   const canSeePlan =
     state.kind === "ready" && state.me.roles.some((r) => ["administrator", "national_planner", "regional_planner", "area_planner"].includes(r));
   const canSeeOrg =
@@ -73,6 +76,9 @@ export default function App() {
           {canSeePlan && (
             <button className={tab === "plan" ? "tab on" : "tab"} onClick={() => setTab("plan")}>Plan</button>
           )}
+          {canSeeCosts && (
+            <button className={tab === "costs" ? "tab on" : "tab"} onClick={() => setTab("costs")}>Costs</button>
+          )}
           <button className={tab === "catalog" ? "tab on" : "tab"} onClick={() => setTab("catalog")}>Events and rules</button>
           {canSeeOrg && (
             <button className={tab === "org" ? "tab on" : "tab"} onClick={() => setTab("org")}>Organization</button>
@@ -83,6 +89,7 @@ export default function App() {
         </nav>
       )}
       {hasPerson && tab === "myplan" && <MyPlan />}
+      {canSeeCosts && tab === "costs" && <Costs isAdmin={isAdmin} whole={canSeeOrg} />}
       {hasAccess && tab === "catalog" && <Catalog isAdmin={isAdmin} />}
       {canSeeOrg && tab === "org" && <Org isAdmin={isAdmin} />}
       {isAdmin && tab === "users" && <Users myId={state.kind === "ready" ? state.me.person_id : null} />}

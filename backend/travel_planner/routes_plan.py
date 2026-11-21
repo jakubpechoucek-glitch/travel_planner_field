@@ -113,8 +113,10 @@ def export_xlsx(year: int, request: Request, include: Literal["", "cancelled"] =
     with request.app.state.pool.connection() as conn:
         try:
             allowed = allowed_units(conn, who)
-            content = plan_export.export(conn, year, allowed, who.person_id, include_cancelled=include == "cancelled",
-                                         with_checks=allowed is None)
+            content = plan_export.export(
+                conn, year, allowed, who.person_id, include_cancelled=include == "cancelled",
+                with_checks=allowed is None,
+                with_costs=bool(set(who.roles) & {"administrator", "national_planner", "regional_planner"}))
             conn.commit()
         except CatalogError as exc:
             conn.rollback()

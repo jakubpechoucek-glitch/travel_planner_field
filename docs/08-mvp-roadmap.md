@@ -50,6 +50,7 @@ Progress:
 - [x] **Admin screens for users**: people, sign-in linking (hashed), roles with scope, bulk linking, suggested roles, deactivation, last-administrator safeguard
 - [x] **My plan** for everyone with a sign-in (own trips, reasons for changes, who is on the trip) and **calendar export (.ics)**; **publishing** of the plan
 - [x] **Excel export** of the plan (summary, trips, people, days away, changes, checks), scoped by role
+- [x] **Cost estimate** from the plan with the budget's own formula, plan against budget, early-booking effect, rates and travel modes, and cost columns in the Excel export
 - [ ] People timeline; synergy suggestions; "suggest a change" from a supervisor to the manager
 
 **Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.
@@ -58,8 +59,7 @@ Progress:
 
 ## 8.3 Phase 2: Control (4 to 6 weeks)
 
-- Cost forecast per trip, month, region; budget comparison (from the *Traveling Plan Budget 2027* sheet).
-- Lead-time and "book earlier" insights; urgent request path.
+- ~~Cost forecast per trip, month, region; budget comparison~~ **Done** (see below). ~~"Book earlier" insights~~ **Done**: the effect of early booking once the discount tiers are known. Urgent request path: open.
 - Itinerary legs, same-day return hint, baggage need.
 - Request/approval statuses with the SAP request number.
 - Compliance dashboard with under- and over-use per region and person.

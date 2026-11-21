@@ -151,6 +151,7 @@ def _place(t: dict[str, Any]) -> tuple[str, str, str]:
 
 
 def build(conn: Connection, year: int, allowed: set[int] | None, *, include_cancelled: bool, with_checks: bool,
+          costs: dict[int, float] | None = None, event_costs: dict[str, float] | None = None,
           now: datetime | None = None) -> tuple[bytes, dict[str, int]]:
     data = _load(conn, year, allowed, include_cancelled)
     if data["plan"] is None:
@@ -209,7 +210,8 @@ def build(conn: Connection, year: int, allowed: set[int] | None, *, include_canc
     row += 2
     put(ws, row, ["Trips by event"], bold=True)
     row += 1
-    put(ws, row, ["Event", "", "Trips", "Merged", "Days away"], header=True)
+    put(ws, row, ["Event", "", "Trips", "Merged", "Days away", *(["Estimate (PHP)"] if costs is not None else [])],
+        header=True)
     ws.row_dimensions[row].height = 32
     by_event: dict[str, list[int]] = defaultdict(lambda: [0, 0, 0])
     for t in live:
@@ -220,8 +222,10 @@ def build(conn: Connection, year: int, allowed: set[int] | None, *, include_canc
         e[2] += days * sum(1 for p in parts_by[t["id"]] if p["travels"])  # days away, summed over travelers
     for name, (n, m, d) in sorted(by_event.items()):
         row += 1
-        put(ws, row, [name, "", n, m, d])
-    for c, w in enumerate([34, 32, *([9] * 12), 9], 1):
+        put(ws, row, [name, "", n, m, d, *([round((event_costs or {}).get(name, 0.0))] if costs is not None else [])])
+        if costs is not None:
+            ws.cell(row, 6).number_format = "#,##0"
+    for c, w in enumerate([34, 32, *([11] * 12), 9], 1):
         ws.column_dimensions[get_column_letter(c)].width = w
     for r in range(first_data, first_data + len(cells) + 1):  # zeros stay blank so the busy months stand out
         for c in range(3, 15):
@@ -252,13 +256,17 @@ def build(conn: Connection, year: int, allowed: set[int] | None, *, include_canc
             t["generated_start_date"], t["generated_end_date"], "Yes" if moved else "No",
             "Yes" if t["changed"] else "No", t["last_reason"] or t["cancel_reason"] or "",
             ", ".join(combined[t["id"]]), t["notes"] or "", t["sap_request_no"] or "",
+            *([costs.get(t["id"])] if costs is not None else []),
         ])
     table(ws, ["Trip ID", "Event", "Code", "Region", "Cluster", "Local office", "Start", "End", "Days",
                "Nights", "Status", "Source", "Organizer", "Travelers", "Hosts", "Transport", "Start by the rules",
                "End by the rules", "Moved", "Changed by hand", "Last reason", "Also held at this trip", "Notes",
-               "SAP request"],
-          rows, [9, 32, 15, 14, 16, 16, 16, 16, 7, 8, 14, 9, 22, 10, 7, 12, 16, 16, 8, 10, 36, 28, 36, 14],
+               "SAP request", *(["Estimated cost (PHP)"] if costs is not None else [])],
+          rows, [9, 32, 15, 14, 16, 16, 16, 16, 7, 8, 14, 9, 22, 10, 7, 12, 16, 16, 8, 10, 36, 28, 36, 14, 16],
           wrap={22, 23, 24})
+    if costs is not None:
+        for r in range(2, len(rows) + 2):
+            ws.cell(r, 25).number_format = "#,##0"
 
     # ----- People on trips
     ws = wb.create_sheet("People on trips")
@@ -353,8 +361,16 @@ def build(conn: Connection, year: int, allowed: set[int] | None, *, include_canc
 
 
 def export(conn: Connection, year: int, allowed: set[int] | None, actor: int | None, *,
-           include_cancelled: bool, with_checks: bool) -> bytes:
-    content, stats = build(conn, year, allowed, include_cancelled=include_cancelled, with_checks=with_checks)
-    audit(conn, actor, "plan.export", "plan_year", year, {**stats, "whole_plan": allowed is None})
+           include_cancelled: bool, with_checks: bool, with_costs: bool = False) -> bytes:
+    costs = event_costs = None
+    if with_costs:  # the cost estimate is only for the roles that may see costs
+        from . import cost_store
+
+        report = cost_store.forecast_report(conn, year, allowed)
+        costs = report["trip_costs"]
+        event_costs = {e["event"]: e["cost"] for e in report["by_event"]}
+    content, stats = build(conn, year, allowed, include_cancelled=include_cancelled, with_checks=with_checks,
+                           costs=costs, event_costs=event_costs)
+    audit(conn, actor, "plan.export", "plan_year", year, {**stats, "whole_plan": allowed is None, "costs": with_costs})
     return content
 

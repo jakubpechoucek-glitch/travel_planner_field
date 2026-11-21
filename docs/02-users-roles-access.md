@@ -72,6 +72,7 @@ Implemented on the **Users** page (administrators only; `backend/travel_planner/
 
 | View | Audience | Content |
 |------|----------|---------|
+| **Costs** | Administrators, national and regional planners | The estimate of the plan (see [Planning workflow](05-planning-workflow.md#57-cost-forecast)); administrators set rates, travel modes, early-booking discounts and load the budget |
 | **Export to Excel** | Administrators, national, regional and area planners | The plan they can see as a workbook (see [Planning workflow](05-planning-workflow.md#59-excel-export)); every export is written to the audit log |
 | **My plan** | Everyone with a linked sign-in (supervisors land here) | The trips the person takes part in, as organizer, traveler or host, grouped by month; the next trip; status (proposed, confirmed, done, cancelled); the original date and the reason when a trip was moved or changed; who else is on the trip; calendar export (.ics). Supervisors see it once the plan is published; planners see their own trips while it is under review. Cancelled and earlier trips are folded away |
 | **Plan (own scope)** | Regional and area planners | The heatmap, trips and history of their own units; they can change those trips (see [Planning workflow](05-planning-workflow.md#53-manual-changes-and-reasons)). Plan-wide checks and plan generation stay with administrators and national planners |
@@ -85,6 +86,7 @@ Implemented on the **Users** page (administrators only; `backend/travel_planner/
 
 ## 2.5 Principle of least privilege
 
-- Cost forecasts are visible to RM, Head and Administrator only.
+- Cost estimates are visible to administrators, national planners and regional planners (for their own region). Area planners, supervisors and the other roles do not see costs; the Excel export leaves the cost columns out for them.
+- The budget lines and the plan-against-budget comparison are visible to administrators and national planners only.
 - Comments and override reasons are visible to anyone who can see the trip.
 - Contact data (phone numbers) is **not stored** at all.

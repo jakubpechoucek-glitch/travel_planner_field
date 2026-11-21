@@ -143,12 +143,40 @@ manual change and records its reason automatically.
 In the MVP, planners work with `generated`, `planned`, `completed` and `cancelled`. The request and
 approval states are included in the model so Phase 2 does not need a migration of existing data.
 
-## 5.7 Cost forecast (Phase 2)
+## 5.7 Cost forecast
 
-The Budget sheet shows the logic to reproduce: *trips × (airfare + hotel nights × rate + local transport + per diem × days)*,
-with different unit prices for land versus air or sea. The model stores **cost rates** by position and transport mode,
-and the app forecasts cost per trip, per month and per region, comparing it with the annual budget lines. The forecast also
-shows the effect of **booking earlier** (a configurable lead-time discount factor) to help justify early approval.
+Implemented in `backend/travel_planner/cost_engine.py` (pure logic), `cost_store.py` (database) and the **Costs** page. Visible to administrators, national planners and regional planners
+(for their own region); administrators maintain the rates.
+
+**The model is the budget's own formula.** For every person who *travels* on a planned trip (hosts, who are visited, cost nothing):
+
+> cost = fare (air or sea, only if the person has to fly or sail) + local transport + nights × hotel per night + days × per diem
+
+with *days* from the start to the end date and *nights* = days − 1. The starting rates come from the formulas of the 2027 budget ("Per Budget Travelling (FC)"):
+air fare ₱20,000 (round trip), local transport ₱2,500, hotel ₱3,000 a night (₱5,000 for the Head of Field), per diem ₱600. They reproduce the budget's unit prices, for example
+an Area Manager flying for three days: 20,000 + 2 × 3,000 + 2,500 + 3 × 600 = ₱30,300; by land: 6,000 + 2,500 + 1,800 = ₱10,300; the Head of Field flying for three days: ₱34,300.
+
+**Does the person fly?** It depends on where they are based and where the trip takes place:
+
+1. A *place override* (an island or a remote place that needs a flight, from anywhere or from one region) wins.
+2. Otherwise the *travel modes between regions* table decides (rows: where the person is based; columns: the region of the trip). Inside a region people go by land unless the table says otherwise.
+3. A person is based in the region of their assignment, or of their local office; the Head of Field in the configured *head office region*. Nationwide events are held in the configured *venue region*.
+4. Anything unknown is counted as by land and **reported** ("for N person-trips the home or the place is unknown").
+
+The application loads *suggested* modes (land inside a region and between NCR, North Luzon and South Luzon, air otherwise) on request; the business must confirm them.
+
+**Rates** have valid-from dates: a new rate from a date ends the one it replaces, so earlier trips keep their price. A rate for a position beats the general one. A missing rate is counted as zero and
+reported, never hidden.
+
+**What the page shows:** the total, trips and person-trips, the average per person-trip and the share by air or sea; cost by month; cost by event, place and position; the assumptions and what is missing.
+
+**Plan against the budget.** The budget workbook is loaded on the same page (administrators): each line (event, position, count, frequency, unit price, annual cost) is matched to an event of the catalog
+(automatically by name, and by hand where it cannot be matched) and compared per event: budget cost and person-trips (count × frequency) against the estimate and the person-trips of the plan.
+
+**Early booking.** Booking early makes air and sea fares cheaper, but the discounts are **not assumed**: the business enters tiers ("booked at least 60 days ahead: 20% off"). With tiers the page shows
+today's fares, the fares if every one were booked N days ahead, and the saving. Without tiers the saving is zero and the page asks for the numbers.
+
+**Not included:** baggage fees, travel insurance, laundry, cash advances, incentive trips and anything outside field collections; fares by route or date; changes after booking. These can be added as rates or lines.
 
 ## 5.8 In-app help
 

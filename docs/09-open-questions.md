@@ -143,7 +143,24 @@ Decisions taken while building the editing; please confirm:
 | X4 | The SAP request column is empty until request numbers are tracked. | Import SAP numbers from the travel desk |
 | X5 | Days are calendar days (start to end inclusive); nights are days minus one. Public holidays are not considered. | Working days, or the company's own definition of days out of office |
 
-## 9.10 Product and design
+## 9.10 Cost estimate: first findings and assumptions
+
+The first estimate for 2027 (real structure, the 25 budget lines of Field Collections, suggested travel modes) came to **₱8.5 million for 255 trips and 1,220 person-trips, against a budget of ₱24.0 million**.
+It is not a verdict on the budget: it shows where the plan and the budget assume different things. Please go through them with the business:
+
+| # | Finding | What to decide |
+|---|---------|----------------|
+| C1 | **Area meetings.** The budget prices a supervisor's area meeting as 3 days and 2 nights (₱10,800 by land, 560 person-trips: ₱6.0 million). The catalog plans a one-day meeting (no hotel), so the estimate is about ₱2.3 million. | How long is an area meeting? One day, or three days with two nights for supervisors from afar? |
+| C2 | **Area visits.** The budget has 532 person-trips (for example 14 Area Managers × 24 and 15 supervisors × 12); the plan has 72 visits with one traveler each. | Are all visits per Area Manager (monthly, twice a month) in the plan, and do supervisors travel to them? |
+| C3 | **Local office visits** (supervisors, ₱2.4 million, 600 person-trips) are in the budget but have no schedule rule, so they are not planned. | Add a rule for them, or keep them as a transport allowance outside the plan |
+| C4 | **Region management meetings** are in the plan (53 person-trips) but not in the budget. | Add a budget line, or treat them as combined with other events |
+| C5 | **Field Leader's Collections University**, **Lakbay** and the **Head's area tour** cost more in the plan than in the budget (230 person-trips against 150; 114 against 19; 20 against 8) because the plan sends more people or more trips. | Confirm the participants and the number of trips |
+| C6 | The budget's unit prices vary by line (for example 1 night or 2 nights, local transport ₱1,000, ₱2,500 or ₱3,000). The estimate uses one rate card. | Keep one rate card, or add rates by event or position |
+| C7 | The starting **travel modes** are suggested (land inside a region and between NCR, North Luzon and South Luzon; air otherwise). Places that always need a flight (Palawan, Mindoro, Bicol, Cebu and other islands) must be added as place overrides. | Confirm the table and list the remote places |
+| C8 | **Early-booking discounts are not known**, so the estimate shows no saving. | Ask the travel desk for the discount at 30, 60 and 90 days ahead |
+| C9 | The estimate counts the fare and costs of the **people who travel**. Hosts cost nothing, and costs outside field collections (Legal, Training and Quality lines of the budget) are not loaded. | Load those budget lines when their events are planned |
+
+## 9.11 Product and design
 
 | # | Question |
 |---|----------|
@@ -154,7 +171,7 @@ Decisions taken while building the editing; please confirm:
 | U5 | Notifications: e-mail only, or also Microsoft Teams? (Not in MVP.) |
 | U6 | Time to retain trip history after the plan year closes? |
 
-## 9.11 Next steps
+## 9.12 Next steps
 
 1. Business owner reviews documents 1 to 5 and answers B1 to B12, P1 to P5.
 2. Follow-up meeting (the Thursday session proposed at the kickoff) to walk through the calendar views.

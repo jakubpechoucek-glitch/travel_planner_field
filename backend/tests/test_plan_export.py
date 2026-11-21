@@ -197,3 +197,30 @@ def test_who_may_export(plan):
     assert plan.get("/api/plan/2027/export.xlsx", headers={"X-Forwarded-Email": "nobody@example.test"}).status_code == 403
     assert plan.get("/api/plan/2030/export.xlsx", headers=ADMIN).status_code == 404
     assert plan.get("/api/plan/2027/export.xlsx", headers=ADMIN, params={"include": "everything"}).status_code == 422
+
+
+def test_the_cost_estimate_is_in_the_file_only_for_roles_that_may_see_costs(plan):
+    from travel_planner.cost_store import forecast_report  # noqa: F401  (documents where the numbers come from)
+
+    wb, _ = export(plan)
+    h = {n: i for i, n in enumerate(header(wb, "Trips"))}
+    assert "Estimated cost (PHP)" in h
+    trips = rows(wb, "Trips")
+    cost = sum(t[h["Estimated cost (PHP)"]] or 0 for t in trips)
+    f = plan.get("/api/cost/2027/forecast", headers=ADMIN).json()["totals"]["cost"]
+    assert abs(cost - f) < 1                                                    # the file agrees with the Costs page
+    ws = wb["Summary"]
+    start = next(i for i, r in enumerate(ws.iter_rows(values_only=True)) if r[0] == "Event") + 1
+    events = [r for r in list(ws.iter_rows(values_only=True))[start:] if r[0]]
+    assert abs(sum(r[5] for r in events) - f) < len(events)                     # rounded per event
+    # a regional planner sees the costs of their own region
+    wb_r, _ = export(plan, headers=RITA)
+    assert "Estimated cost (PHP)" in header(wb_r, "Trips")
+    # an area planner has plan access, but costs are not for them
+    users = {u["full_name"]: u["id"] for u in plan.get("/api/admin/users", headers=ADMIN).json()["users"]}
+    plan.post(f"/api/admin/users/{users['Amy Alvarez']}/login", headers=ADMIN, json={"email": "amy.alvarez@example.test"})
+    amy = {"X-Forwarded-Email": "amy.alvarez@example.test"}
+    wb_a, _ = export(plan, headers=amy)
+    assert "Estimated cost (PHP)" not in header(wb_a, "Trips")
+    assert not any("Estimate (PHP)" in str(c) for c in all_text(wb_a))
+    assert q("SELECT bool_or((details->>'costs')::boolean) FROM travel.audit_log WHERE action = 'plan.export'")[0][0]

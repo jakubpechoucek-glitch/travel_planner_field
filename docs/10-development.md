@@ -99,6 +99,21 @@ Once real administrators have a linked sign-in and the role, remove that setting
 `Checks` only for the whole-plan roles. The workbook is built with openpyxl in `backend/travel_planner/plan_export.py` and tested in `backend/tests/test_plan_export.py`
 (structure, agreement with the plan, real dates, no formulas from text, scope, audit).
 
+## 10.3g Cost estimate (API)
+
+| Call | Who | Purpose |
+|------|-----|---------|
+| `GET /api/cost/{year}/forecast?book_ahead_days=` | administrator, national, regional planner (scoped) | Totals, by month, place, event and position, by mode, the budget comparison (whole-plan roles), the early-booking effect and the assumptions |
+| `GET /api/cost/config` | the same | Rates, travel modes, place overrides, settings, discount tiers |
+| `GET /api/cost/{year}/budget` | administrator, national planner | The budget lines and their event |
+| `POST /api/admin/cost/rates`, `DELETE /api/admin/cost/rates/{id}` | administrator | Set a rate from a date (closes the previous one) or end it |
+| `PUT /api/admin/cost/modes`, `POST /api/admin/cost/modes/suggest` | administrator | Set one cell of the region table, or load the suggested defaults |
+| `POST /api/admin/cost/overrides`, `DELETE .../{id}` | administrator | A place that needs another mode |
+| `PUT /api/admin/cost/settings`, `PUT /api/admin/cost/booking-tiers` | administrator | Head office and venue regions; early-booking tiers (the factor must not rise with the days) |
+| `POST /api/admin/budget/import?year=&commit=`, `PUT /api/admin/budget/lines/{id}` | administrator | Load the budget workbook (preview by default) and match a line to an event |
+
+The engine (`cost_engine.py`) is tested without a database in `backend/tests/test_cost_engine.py`, including the budget's unit prices; `test_costs.py` covers the database side.
+
 ## 10.4 Configuration
 
 | Variable | Used in | Meaning |
