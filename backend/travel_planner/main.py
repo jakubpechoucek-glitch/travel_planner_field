@@ -20,6 +20,7 @@ from .identity import SESSION_COOKIE, Identity, key_hash, make_session, resolve_
 from .migrate import apply_migrations
 from .routes_catalog import router as catalog_router
 from .routes_org import router as org_router
+from .routes_plan import router as plan_router
 
 log = logging.getLogger("travel_planner")
 
@@ -48,6 +49,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.include_router(org_router)
     app.include_router(catalog_router)
+    app.include_router(plan_router)
 
     @app.exception_handler(RequestValidationError)
     async def friendly_validation_error(_: Request, exc: RequestValidationError):

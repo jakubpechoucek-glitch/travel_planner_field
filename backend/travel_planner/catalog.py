@@ -41,6 +41,7 @@ class ParticipationIn(BaseModel):
     position_id: int
     participation: Literal["organizer", "participant"] = "participant"
     yearly_limit: int | None = Field(default=None, ge=0, le=366)
+    travels: bool = True
 
 
 class MergeIn(BaseModel):
@@ -73,6 +74,7 @@ class BlackoutIn(BaseModel):
     reason: str | None = Field(default=None, max_length=500)
     severity: Severity = "warn"
     event_type_ids: list[int] = Field(default_factory=list)
+    caused_by_event_type_id: int | None = None
 
 
 class CatalogError(Exception):
@@ -194,7 +196,7 @@ def load_catalog(conn: Connection, plan_year: int | None = None) -> dict[str, An
     pos_name = {p["id"]: p["name"] for p in positions}
     events = conn.execute("SELECT * FROM event_type ORDER BY active DESC, name").fetchall()
     parts = conn.execute(
-        "SELECT event_type_id, position_id, participation, yearly_limit FROM event_type_position"
+        "SELECT event_type_id, position_id, participation, yearly_limit, travels FROM event_type_position"
     ).fetchall()
     rules = conn.execute(
         "SELECT id, rule_key, version, event_type_id, rule_type, scope_kind, position_id, period, interval_n, "
@@ -205,7 +207,7 @@ def load_catalog(conn: Connection, plan_year: int | None = None) -> dict[str, An
         "FROM merge_rule m JOIN event_type e ON e.id = m.merges_into_id WHERE m.active"
     ).fetchall()
     blackouts = conn.execute(
-        "SELECT b.id, b.plan_year, b.name, b.start_date, b.end_date, b.reason, b.severity, "
+        "SELECT b.id, b.plan_year, b.name, b.start_date, b.end_date, b.reason, b.severity, b.caused_by_event_type_id, "
         "COALESCE(array_agg(be.event_type_id) FILTER (WHERE be.event_type_id IS NOT NULL), '{}') AS event_type_ids "
         "FROM blackout_period b LEFT JOIN blackout_event_type be ON be.blackout_id = b.id "
         "WHERE (%s::int IS NULL OR b.plan_year = %s) GROUP BY b.id ORDER BY b.start_date",
@@ -218,7 +220,7 @@ def load_catalog(conn: Connection, plan_year: int | None = None) -> dict[str, An
     for e in events:
         e = dict(e)
         e["participation"] = [
-            {k: p[k] for k in ("position_id", "participation", "yearly_limit")}
+            {k: p[k] for k in ("position_id", "participation", "yearly_limit", "travels")}
             for p in parts if p["event_type_id"] == e["id"]
         ]
         e["rules"] = [r for r in rules if r["event_type_id"] == e["id"]]
@@ -278,8 +280,8 @@ def save_event_type(conn: Connection, event_id: int | None, data: EventTypeIn, a
     conn.execute("DELETE FROM event_type_position WHERE event_type_id = %s", (event_id,))
     for p in data.participation:
         conn.execute(
-            "INSERT INTO event_type_position(event_type_id, position_id, participation, yearly_limit) "
-            "VALUES (%s,%s,%s,%s)", (event_id, p.position_id, p.participation, p.yearly_limit))
+            "INSERT INTO event_type_position(event_type_id, position_id, participation, yearly_limit, travels) "
+            "VALUES (%s,%s,%s,%s,%s)", (event_id, p.position_id, p.participation, p.yearly_limit, p.travels))
     conn.execute("DELETE FROM merge_rule WHERE event_type_id = %s", (event_id,))
     for m in data.merges:
         conn.execute(
@@ -351,9 +353,11 @@ def _check_blackout(conn: Connection, b: BlackoutIn) -> None:
         raise CatalogError("The end date cannot be before the start date.")
     if not (date(b.plan_year, 1, 1) <= b.start_date and b.end_date <= date(b.plan_year, 12, 31)):
         raise CatalogError(f"The dates must be inside {b.plan_year}.")
-    unknown = set(b.event_type_ids) - _ids(conn, "event_type")
-    if unknown:
+    known = _ids(conn, "event_type")
+    if set(b.event_type_ids) - known:
         raise CatalogError("An affected event type does not exist.")
+    if b.caused_by_event_type_id is not None and b.caused_by_event_type_id not in known:
+        raise CatalogError("The event that causes the blackout does not exist.")
     status = conn.execute("SELECT status FROM plan_year WHERE year = %s", (b.plan_year,)).fetchone()
     if status and status["status"] == "closed":
         raise CatalogError(f"The plan year {b.plan_year} is closed.", 409)
@@ -362,16 +366,16 @@ def _check_blackout(conn: Connection, b: BlackoutIn) -> None:
 def save_blackout(conn: Connection, blackout_id: int | None, b: BlackoutIn, actor: int | None) -> int:
     _check_blackout(conn, b)
     conn.execute("INSERT INTO plan_year(year) VALUES (%s) ON CONFLICT DO NOTHING", (b.plan_year,))
-    vals = (b.plan_year, b.name, b.start_date, b.end_date, b.reason, b.severity)
+    vals = (b.plan_year, b.name, b.start_date, b.end_date, b.reason, b.severity, b.caused_by_event_type_id)
     if blackout_id is None:
         blackout_id = conn.execute(
-            "INSERT INTO blackout_period(plan_year, name, start_date, end_date, reason, severity) "
-            "VALUES (%s,%s,%s,%s,%s,%s) RETURNING id", vals).fetchone()["id"]
+            "INSERT INTO blackout_period(plan_year, name, start_date, end_date, reason, severity, "
+            "caused_by_event_type_id) VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id", vals).fetchone()["id"]
         action = "catalog.blackout.create"
     else:
         if not conn.execute(
-            "UPDATE blackout_period SET plan_year=%s, name=%s, start_date=%s, end_date=%s, reason=%s, severity=%s "
-            "WHERE id=%s RETURNING id", (*vals, blackout_id)).fetchone():
+            "UPDATE blackout_period SET plan_year=%s, name=%s, start_date=%s, end_date=%s, reason=%s, severity=%s, "
+            "caused_by_event_type_id=%s WHERE id=%s RETURNING id", (*vals, blackout_id)).fetchone():
             raise CatalogError("The blackout period does not exist.", 404)
         action = "catalog.blackout.update"
     conn.execute("DELETE FROM blackout_event_type WHERE blackout_id = %s", (blackout_id,))

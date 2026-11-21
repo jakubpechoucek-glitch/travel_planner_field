@@ -79,6 +79,10 @@ The transcript asks explicitly for a pop-up when a user exceeds a frequency limi
 and quota caps is `warn`; blackouts default to `warn` too, because the business wants flexibility with a
 recorded reason rather than a rigid platform.
 
+**How the generator reads the catalog** (details in [Planning workflow](05-planning-workflow.md#52-generating-the-plan)): the number of trips per place comes from the cadence,
+limited by the quota; a position with a yearly limit joins only that often; a field manager above the organizer joins only through a limit or a combined event; a position marked
+*does not travel* is a host; an event combined with another is held together with the more important one.
+
 ## 4.5 Rule versioning
 
 - Rules are versioned and valid from a date; editing a rule creates a new version.

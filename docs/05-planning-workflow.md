@@ -19,23 +19,58 @@ The first plan year is **2027**. Source: "Use travel plans submitted with the an
 
 ## 5.2 Generating the plan
 
-Input: the organization structure valid in the plan year, event types, rules, blackout periods.
+Implemented in `backend/travel_planner/plan_engine.py` (pure logic, no database) and `plan_store.py` (loading and saving).
+Who can run it: administrators and national planners (**Plan → Generate plan**, or `POST /api/admin/plan/{year}/generate`).
 
-Steps:
+**Input:** the organization (regions, clusters, leaders, people), the active event types with their participation and rules, the merge
+rules, and the blackout periods of the plan year. **Output:** trips with dates, a visited place, travelers and hosts.
 
-1. **Expand** each cadence/quota rule into candidate trips per unit or person (for example, 6 area meetings for each of 12 clusters).
-2. **Place blackouts** (conference month, year-end party month) and fixed events first (conference, year-end party).
-3. **Place regional events** (Lakbay, region meetings) with rotation.
-4. **Place recurring events** (area visits and meetings) on preferred weeks, spreading load so that no unit or person exceeds its caps.
-5. **Merge** trips according to merge rules (visit by RM → area meeting).
-6. **Choose destinations:** local office of the visited unit, or the location named in the rule.
-7. **Mark each trip** as `source = generated`, store the rule version, and compute rule warnings.
+**Steps**
 
-The generator is **deterministic** for a given input and seed, and idempotent: regenerating keeps trips that
-were manually edited, confirmed, requested or approved, and replaces only untouched generated trips.
+1. **How many trips.** For each event type with a yearly quota or a cadence: `trips per place = cadence per year`
+   (for example every 2 months gives 6), limited to the quota's minimum and maximum. Places are the clusters, regions, local offices or the
+   whole country, depending on the rule's scope. Events without a quota or cadence (for example Court Visit) are listed as *not planned*.
+2. **Order.** Company events first, then wider scope (nationwide, region, cluster, local office), then events with more participants.
+3. **Placing.** Each trip goes into a calendar week (Monday to Friday, inside the year). Every week gets a penalty and the lowest wins; ties go to the
+   earlier week, so the same inputs always give the same plan.
 
-Granularity: trips have exact dates, but the generator plans by **week** (for example, "week 14") for the first six months and by
-**month** for the second half. The planner can fix exact dates at any time. *(To be confirmed with the business.)*
+   | Penalty | Meaning |
+   |---------|---------|
+   | Distance | Weeks away from the ideal slot (places are staggered so they do not all fall in the same week) |
+   | Blackout | Inside a *warn* blackout: very high. Inside a *block* blackout: never used |
+   | Preferred months | Outside the months of a "preferred months" rule |
+   | Spacing | Same event and place within 3 weeks of another |
+   | Traveler away | A traveler is already on another trip that week (the heaviest everyday penalty) |
+   | Trip limits | A traveler would exceed a trip limit per person and period (for example 2 per month for a Regional Manager) |
+   | Crowded cluster | Other trips in the same cluster that week |
+   | Rotation | More trips of the event in a region and quarter than the rotation rule allows |
+   | Combining | A bonus when a combinable bigger trip of the same place is within a week |
+
+   An event that is *caused by* a blackout (the conference in its month) is placed only inside that period.
+4. **Who takes part.** The organizer is whoever holds the organizer position in the place; when nobody does, the place's leader acts
+   (the Regional Manager in a cluster without an Area Manager). Other positions join by default, except:
+   - positions with a **yearly limit** ("Head of Field up to 3 times") are assigned afterwards, spread evenly over the year, preferring weeks without a clash and months within the trip limits;
+   - a **field manager above the organizer** (for example the Regional Manager at an area meeting) does not join by default; they join only through a yearly limit or when another event is combined into the trip.
+   Positions marked *does not travel* are hosts (for example the supervisors at an area visit).
+5. **Combining.** If a trip meets a combinable event (merge rule) of the same place within a week, and nobody joining is already away, the *less important* one is
+   absorbed: it stays in the plan as a *merged* row (status cancelled, with a link and the reason "Combined with ...") and its people join the bigger trip.
+   The bigger trip is chosen by importance (company event, then scope, then number of participating positions); if two events are equally important they are not combined and the
+   result says so.
+6. **Checks.** The same `evaluate` function that checks manual edits reports: trip limits per person, yearly limits, quotas per place (too few or too many),
+   blackouts, and a person in two trips at once. Merged trips still count toward the quotas.
+
+**Preview and saving.** A preview runs the whole generation inside a transaction and rolls it back, so the numbers are exact.
+Saving replaces **untouched generated trips** (and the merged rows they absorbed) and keeps everything else: trips that were edited (any change except
+`created`/`generated` in the history), added by hand, requested, approved or completed. Kept trips are counted toward the quotas and keep their people
+and weeks busy, so regenerating never duplicates them. The plan year must be in *draft* or *review*; generating moves *draft* to *review*.
+
+**Known limits** (see [open questions](09-open-questions.md#95-generator-findings))
+
+- Working days only; public holidays are not known yet.
+- One trip has one visited place. Multi-stop tours (the "T1 / L1" legs of the Head's area tour) are not grouped yet.
+- Concurrency limits ("at most N at once") are stored but not yet used by the generator or the checks.
+- Training, Quality and Legal people are not in the organization import yet, so those positions appear in rules but not on trips.
+- Visibility of the plan is limited to administrators and national planners until scoped views for regional and area managers are built.
 
 ## 5.3 Manual changes and reasons
 

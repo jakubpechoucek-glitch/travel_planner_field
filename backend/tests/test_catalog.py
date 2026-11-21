@@ -177,3 +177,20 @@ def test_blackouts(c):
                   json={**body, "start_date": "2029-01-01", "end_date": "2029-01-05"}).status_code == 422
     assert c.delete(f"/api/admin/blackouts/{bid}", headers=ADMIN).status_code == 204
     assert c.delete(f"/api/admin/blackouts/{bid}", headers=ADMIN).status_code == 404
+
+
+def test_generator_settings_in_the_catalog(c):
+    cat = catalog(c)
+    visit = event(cat, "AM-FSV-VISIT")
+    fsv = pos_id(cat, "FSV")
+    assert {p["position_id"]: p["travels"] for p in visit["participation"]}[fsv] is False   # visited, not travelling
+    assert fsv in {p["position_id"] for p in event(cat, "YEAR-END")["participation"]}
+    conf_id = event(cat, "CONF")["id"]
+    assert {b["caused_by_event_type_id"] for b in cat["blackouts"]} == {conf_id, event(cat, "YEAR-END")["id"]}
+    body = {"plan_year": 2027, "name": "Test", "start_date": "2027-02-01", "end_date": "2027-02-05",
+            "caused_by_event_type_id": 9999}
+    assert c.post("/api/admin/blackouts", headers=ADMIN, json=body).status_code == 422
+    ok = c.post("/api/admin/blackouts", headers=ADMIN, json={**body, "caused_by_event_type_id": conf_id})
+    assert ok.status_code == 201
+    rfm = {r["rule_key"] for r in event(cat, "REGIONAL-FIELD-MEET")["rules"]}
+    assert rfm == {"RFM-QUOTA"}                      # the quarterly rule was replaced by a yearly quota per region

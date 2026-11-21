@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Catalog from "./Catalog";
 import Org from "./Org";
+import Plan from "./Plan";
 
 type Me = { signed_in: boolean; linked: boolean; has_access: boolean; name: string | null; roles: string[] };
 type State =
@@ -11,7 +12,7 @@ type State =
 
 export default function App() {
   const [state, setState] = useState<State>({ kind: "loading" });
-  const [tab, setTab] = useState<"home" | "org" | "catalog">("home");
+  const [tab, setTab] = useState<"home" | "org" | "catalog" | "plan">("home");
 
   const load = useCallback(async () => {
     try {
@@ -55,6 +56,9 @@ export default function App() {
       {hasAccess && (
         <nav className="tabs" aria-label="Main">
           <button className={tab === "home" ? "tab on" : "tab"} onClick={() => setTab("home")}>Home</button>
+          {canSeeOrg && (
+            <button className={tab === "plan" ? "tab on" : "tab"} onClick={() => setTab("plan")}>Plan</button>
+          )}
           <button className={tab === "catalog" ? "tab on" : "tab"} onClick={() => setTab("catalog")}>Events and rules</button>
           {canSeeOrg && (
             <button className={tab === "org" ? "tab on" : "tab"} onClick={() => setTab("org")}>Organization</button>
@@ -63,6 +67,7 @@ export default function App() {
       )}
       {hasAccess && tab === "catalog" && <Catalog isAdmin={isAdmin} />}
       {canSeeOrg && tab === "org" && <Org isAdmin={isAdmin} />}
+      {canSeeOrg && tab === "plan" && <Plan canGenerate={canSeeOrg} />}
       <section className="card" aria-live="polite" hidden={hasAccess && tab !== "home"}>
         {state.kind === "loading" && <p>Loading…</p>}
         {state.kind === "error" && <p className="problem">{state.message}</p>}

@@ -44,6 +44,15 @@ The same function runs behind **Organization → Import organization** in the ap
 The workbook contains personal data: keep it outside the repository (`*.xlsx` is git-ignored) and never use it in tests.
 Tests build a small fictitious workbook (`backend/tests/orgfixture.py`). Details: [Organization model](03-organization-model.md#35-the-organization-import-phase-1).
 
+## 10.3b Generating a plan
+
+In the app: **Plan → Generate plan** (administrators, national planners), preview first. The engine is plain Python (`backend/travel_planner/plan_engine.py`) and can be run
+without a database for experiments; `backend/tests/test_plan_engine.py` shows how to build the inputs. `plan_store.py` loads the inputs from PostgreSQL and saves the result.
+
+```bash
+curl -X POST "http://localhost:8000/api/admin/plan/2027/generate?commit=false"   # preview (nothing saved)
+```
+
 ## 10.4 Configuration
 
 | Variable | Used in | Meaning |

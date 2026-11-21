@@ -17,7 +17,7 @@ type Rule = {
   summary: string;
 };
 type Severity = "block" | "warn" | "info";
-type Part = { position_id: number; participation: "organizer" | "participant"; yearly_limit: number | null };
+type Part = { position_id: number; participation: "organizer" | "participant"; yearly_limit: number | null; travels: boolean };
 type Merge = { merges_into_id: number; merges_into_name?: string; condition_text: string | null; severity: Severity };
 type EventType = {
   id: number;
@@ -45,6 +45,7 @@ type Blackout = {
   reason: string | null;
   severity: Severity;
   event_type_ids: number[];
+  caused_by_event_type_id: number | null;
 };
 type CatalogData = { positions: Position[]; event_types: EventType[]; general_rules: Rule[]; blackouts: Blackout[] };
 
@@ -206,6 +207,7 @@ function EventView({ event, data, positions, isAdmin, onEdit, onChanged }: {
               {positions.get(p.position_id)?.name}
               {p.participation === "organizer" && " (organizer)"}
               {p.yearly_limit !== null && ` · up to ${p.yearly_limit} a year`}
+              {!p.travels && " · hosts, does not travel"}
             </li>
           ))}
         </ul>
@@ -459,7 +461,7 @@ function EventForm({ event, data, onDone, onCancel }: {
   };
 
   const togglePart = (id: number, on: boolean) =>
-    setParts((p) => { const n = { ...p }; if (on) n[id] = { position_id: id, participation: "participant", yearly_limit: null }; else delete n[id]; return n; });
+    setParts((p) => { const n = { ...p }; if (on) n[id] = { position_id: id, participation: "participant", yearly_limit: null, travels: true }; else delete n[id]; return n; });
 
   return (
     <form className="card" onSubmit={submit}>
@@ -497,9 +499,9 @@ function EventForm({ event, data, onDone, onCancel }: {
       <label className="check"><input type="checkbox" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Active</label>
 
       <fieldset>
-        <legend>Who takes part</legend>
+        <legend>Who takes part (a position that does not travel is visited, for example the supervisors at an area visit)</legend>
         <table className="matrix">
-          <thead><tr><th>Position</th><th>Takes part</th><th>Organizer</th><th>Yearly limit</th></tr></thead>
+          <thead><tr><th>Position</th><th>Takes part</th><th>Organizer</th><th>Travels</th><th>Yearly limit</th></tr></thead>
           <tbody>
             {data.positions.map((p) => {
               const part = parts[p.id];
@@ -509,6 +511,8 @@ function EventForm({ event, data, onDone, onCancel }: {
                   <td><input type="checkbox" aria-label={`${p.name} takes part`} checked={!!part} onChange={(e) => togglePart(p.id, e.target.checked)} /></td>
                   <td><input type="checkbox" aria-label={`${p.name} organizes`} disabled={!part} checked={part?.participation === "organizer"}
                     onChange={(e) => setParts({ ...parts, [p.id]: { ...part, participation: e.target.checked ? "organizer" : "participant" } })} /></td>
+                  <td><input type="checkbox" aria-label={`${p.name} travels`} disabled={!part} checked={part?.travels ?? true}
+                    onChange={(e) => setParts({ ...parts, [p.id]: { ...part, travels: e.target.checked } })} /></td>
                   <td><input type="number" min={0} aria-label={`${p.name} yearly limit`} disabled={!part} value={part?.yearly_limit ?? ""}
                     onChange={(e) => setParts({ ...parts, [p.id]: { ...part, yearly_limit: e.target.value === "" ? null : Number(e.target.value) } })} /></td>
                 </tr>
@@ -557,6 +561,7 @@ function Blackouts({ data, isAdmin, onChanged }: { data: CatalogData; isAdmin: b
               <span className={`badge sev-${b.severity}`}>{SEVERITY[b.severity]}</span> <strong>{b.name}</strong> · {b.start_date} to {b.end_date}
               <div className="muted">
                 {b.event_type_ids.length ? b.event_type_ids.map((i) => names.get(i)).join(", ") : "All event types"}
+                {b.caused_by_event_type_id && ` · Holds: ${names.get(b.caused_by_event_type_id)}`}
                 {b.reason && ` · ${b.reason}`}
               </div>
             </div>
@@ -586,12 +591,18 @@ function BlackoutForm({ blackout, data, onCancel, onSaved }: {
     end_date: blackout?.end_date ?? "2027-01-31",
     reason: blackout?.reason ?? "",
     severity: blackout?.severity ?? ("warn" as Severity),
+    caused_by_event_type_id: blackout?.caused_by_event_type_id ?? ("" as number | ""),
   });
   const [ids, setIds] = useState<Set<number>>(new Set(blackout?.event_type_ids ?? []));
   const [error, setError] = useState<string | null>(null);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const body = { ...f, reason: f.reason || null, event_type_ids: [...ids] };
+    const body = {
+      ...f,
+      reason: f.reason || null,
+      event_type_ids: [...ids],
+      caused_by_event_type_id: f.caused_by_event_type_id === "" ? null : f.caused_by_event_type_id,
+    };
     const { error: err } = blackout
       ? await call(`/api/admin/blackouts/${blackout.id}`, "PUT", body)
       : await call("/api/admin/blackouts", "POST", body);
@@ -613,6 +624,13 @@ function BlackoutForm({ blackout, data, onCancel, onSaved }: {
           <option value="block">Block: do not allow saving</option>
         </select></label>
       <label>Reason (optional)<input value={f.reason} maxLength={500} onChange={(e) => setF({ ...f, reason: e.target.value })} /></label>
+      <label>Event held in this period (optional)
+        <select value={f.caused_by_event_type_id}
+          onChange={(e) => setF({ ...f, caused_by_event_type_id: e.target.value ? Number(e.target.value) : "" })}>
+          <option value="">None</option>
+          {data.event_types.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+        </select>
+      </label>
       <fieldset>
         <legend>Events affected (none selected means all events)</legend>
         <div className="months">

@@ -44,7 +44,9 @@ Progress:
 - [x] Organization page with structure view and in-app help
 - [x] **Event catalog and rules**: starting catalog loaded, admin screens for event types, participation, rules (versioned), merge rules and blackouts, in-app help
 - [ ] Admin screens for users, roles and login linking
-- [ ] Plan generator, calendar views, manual editing, warnings
+- [x] **Plan generator**: rules to trips (weeks, blackouts, limits, combining, yearly limits), preview and regeneration that keeps edits, checks, heatmap and trip list
+- [ ] Manual editing of trips with mandatory reasons, warnings while editing
+- [ ] Scoped views for regional and area managers; people timeline; synergy suggestions
 
 **Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.
 

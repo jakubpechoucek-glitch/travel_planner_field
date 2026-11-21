@@ -64,7 +64,7 @@ The application validates `params` per `rule_type` (JSON schema) before saving.
 |-------|---------|
 | `plan_year` | Lifecycle: draft, review, published, closed |
 | `blackout_period` / `blackout_event_type` | Dates where event types are not allowed (no event types listed = all) |
-| `trip` | One planned occurrence. Keeps **both** the current dates and the original generated dates (`generated_start_date`, `generated_end_date`) so the UI can show the deviation |
+| `trip` | One planned occurrence. A trip that was combined into a bigger one has `status = cancelled`, `merged_into_trip_id` set and the reason "Combined with ...".  Keeps **both** the current dates and the original generated dates (`generated_start_date`, `generated_end_date`) so the UI can show the deviation |
 | `trip_participant` | Who is involved; `travels = false` for local hosts, so that cost and overlap logic ignore them |
 | `trip_leg` | Itinerary legs for multi-stop trips (the source plan's "T1 / L1" notation); Phase 2 |
 | `trip_change` | History. A reason is **mandatory** for every change except `created` and `generated` (enforced by a `CHECK`) |
@@ -114,6 +114,8 @@ are still `generated` and unedited.
 - Retention: trips and history are kept for the life of the plan year plus the period required by company policy *(to be confirmed)*.
 
 ## 6.7 Migrations
+
+Migration `0004_plan_generation.sql` adds `event_type_position.travels` (a visited team is a host, not a traveler) and `blackout_period.caused_by_event_type_id` (the event held in that period, for example the conference), and corrects two seed rules (see [open questions](09-open-questions.md#94-catalog-assumptions)).
 
 Migration `0002_org_import.sql` adds `org_unit.lead_person_id`, `person.name_key` and seeds the field-hierarchy positions (`HEAD`, `RM`, `AM`, `SFSV`, `FSV2`, `FSV`, `DM`, `DSV`).
 

@@ -95,3 +95,15 @@ table.matrix { width: 100%; border-collapse: collapse; }
 table.matrix th, table.matrix td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); }
 table.matrix input[type=number] { width: 80px; padding: 4px 6px; }
 form.card { display: grid; gap: 12px; }
+.heatwrap { overflow-x: auto; }
+table.heat { border-collapse: separate; border-spacing: 3px; width: 100%; }
+table.heat th { font-size: 12px; color: var(--muted); font-weight: 600; text-align: center; padding: 2px 0; }
+table.heat th.rowlabel { text-align: left; white-space: nowrap; padding-right: 10px; font-size: 14px; color: var(--text); }
+table.heat tr.regionhead th { text-align: left; color: var(--accent); font-size: 13px; padding-top: 12px; }
+table.heat td { padding: 0; }
+button.cellbtn { width: 100%; min-width: 34px; height: 30px; padding: 0; border-radius: 6px; background: transparent; color: var(--text); font-weight: 700; font-size: 13px; border: 1px solid var(--border); cursor: pointer; }
+button.cellbtn:disabled { cursor: default; border-color: transparent; }
+table.trips { width: 100%; border-collapse: collapse; margin: 8px 0; }
+table.trips th, table.trips td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+details.check { margin: 6px 0; }
+details.check summary { cursor: pointer; font-weight: 600; }

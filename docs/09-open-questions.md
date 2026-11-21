@@ -74,13 +74,30 @@ Decisions taken when the starting catalog was loaded. Each can be changed in the
 | K2 | Region visit: 4 per Area Manager a year (quarterly). Region management meeting: 3 per cluster, every four months, rotating through 4 to 5 clusters per region each quarter. | Events description |
 | K3 | Lakbay: 3 a year per region in 3 different clusters. Conference: 1 a year. Year-end party: 1 per cluster, preferably November to January. | Events description |
 | K4 | Field Leader's Collections University: 2 sessions per cluster a year (one per half). | Events description |
-| K5 | Head of Field area tour: every local office once a year. Regional Field Meeting: quarterly, labelled per region (the source is unclear). | Travel Plans |
+| K5 | Head of Field area tour: every local office once a year. Regional Field Meeting: once per region a year, rotating through the quarters (changed from "4 per region" after the first generation; the source says "quarterly" but lists one meeting per region). | Travel Plans |
 | K6 | Regional Manager: at most 2 trips a month (warn). Head of Field: at most 1 trip a month (warn); this conflicts with the 18 trips in the Travel Plans (see B2). | Position rules |
 | K7 | Conference in April and the year-end party in December 2027 are placeholders for the blackout periods. | Travel Plans (planned month) |
 | K8 | All quota and cap rules default to *warn*, as asked in the meeting ("a prompt when you have exceeded the frequency"). Rotation, cadence and window rules default to *info*. | Meeting |
 | K9 | "Joint visit: Partial" is stored as *Partly*; which functions join which trips is expressed in the participation table. | Events description |
+| K10 | Supervisors attend the year-end party (added to its participants; the template lists only AM, RM, Head, Training). | Activity: Area Manager to Supervisors |
+| K11 | The visited team does not travel for visits to them (supervisors at an area visit, the Area Manager at a region visit, supervisors at the Head's area tour). | Events description |
 
-## 9.5 Product and design
+## 9.5 Generator findings
+
+The first plan generated for 2027 from the real structure (255 trips plus 46 combined, about 0.2 seconds) shows where the rules and the numbers disagree. These are the
+questions the business needs to answer before the plan can be taken as a proposal:
+
+| # | Finding | Options |
+|---|---------|---------|
+| G1 | **Lakbay needs "3 different clusters" per region, but four regions have only 2 clusters** (NCR, North Luzon, Visayas, Mindanao). Only South Luzon (4 clusters) works. | Lower the number to 2 for those regions; allow a cluster to host Lakbay twice; or count local offices instead of clusters (the source says "3 unique areas") |
+| G2 | **Trip limits and the catalog volumes contradict each other.** A Regional Manager is limited to 2 trips a month (24 a year), but the catalog gives each RM area meetings (4 per cluster through the merged region visits), region meetings (3 per cluster), Lakbay, the conference and regional meetings. The Head of Field is limited to 1 trip a month, but must meet every local office (20) plus regional meetings. About 40 "trip limit" warnings result. | Raise the limits; reduce the volumes (for example RM joins only some area meetings); or accept the warnings as a planning signal |
+| G3 | **The Head's area tour is 20 separate trips** (one per local office). The Travel Plans group them into about 8 multi-stop trips (T1 / L1, T1 / L2 ...). | Build trip grouping (stops per trip) in the next iteration |
+| G4 | Three overlaps remain where the Head is in two trips in the same week; they follow from G2 and G3. | Resolved with G2 and G3 |
+| G5 | Region visit (4 per cluster) is mostly combined with the area meeting of the same cluster, which is the intent of the merge rule, but it makes the RM travel a lot. | Confirm that the region visit should not be a separate trip |
+| G6 | Weeks start on Monday and trips are Tuesday to Friday. Public holidays and company non-working days are unknown. | Provide the holiday calendar |
+| G7 | The generator treats a "participant" position above the organizer as optional (RM at an area meeting). | Confirm; otherwise set a yearly limit for it in the catalog |
+
+## 9.6 Product and design
 
 | # | Question |
 |---|----------|
@@ -91,7 +108,7 @@ Decisions taken when the starting catalog was loaded. Each can be changed in the
 | U5 | Notifications: e-mail only, or also Microsoft Teams? (Not in MVP.) |
 | U6 | Time to retain trip history after the plan year closes? |
 
-## 9.6 Next steps
+## 9.7 Next steps
 
 1. Business owner reviews documents 1 to 5 and answers B1 to B12, P1 to P5.
 2. Follow-up meeting (the Thursday session proposed at the kickoff) to walk through the calendar views.
