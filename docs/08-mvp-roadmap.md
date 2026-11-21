@@ -1,0 +1,72 @@
+# 8. MVP and Roadmap
+
+Guiding statement from the kickoff meeting: *"Let's focus on a small POC or MVP that lets us test the primary
+intention of this tool, then add features step by step."* Expect **four to five versions** before the model is tuned.
+
+## 8.1 Phase 0: Foundations (1 to 2 weeks)
+
+- Confirm the open questions (see [document 9](09-open-questions.md)), above all workspace access and Lakebase availability.
+- Receive and clean the user list and org chart; agree on position names and codes.
+- Business owner reviews this documentation.
+- Set up repository, CI, local PostgreSQL, a first empty Databricks App deployment.
+
+**Exit criteria:** an empty authenticated app is reachable by test users; data owner confirmed.
+
+## 8.2 Phase 1: MVP (about 6 weeks)
+
+| Capability | Included |
+|------------|----------|
+| Authentication and role-based visibility | Yes: viewer, area, regional, national planner, administrator |
+| Org structure and people | Import from spreadsheet with preview and error report; admin editing |
+| Event catalog and rules | Admin screens for event types, participation, cadence, caps, blackouts |
+| Plan generation for 2027 | Field Collections events only; regeneration keeps manual edits |
+| Calendar views | Heatmap (region/cluster × month/week), people timeline, "My plan" |
+| Manual editing | Move, resize, add, cancel, merge; **mandatory reason** for overrides |
+| Warnings | Period caps, quotas, blackouts, overlap, merge hint, with acknowledgment |
+| Status | generated, planned, completed, cancelled |
+| In-app help | Help panel, tooltips, getting-started tour (English) |
+| Admin | Users and roles, plan year lifecycle, audit log |
+
+**Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.
+
+**Exit criteria:** the Head of Field and three regional managers can generate and adjust the 2027 plan, see all overlaps, and export it; every override has a reason.
+
+## 8.3 Phase 2: Control (4 to 6 weeks)
+
+- Cost forecast per trip, month, region; budget comparison (from the *Traveling Plan Budget 2027* sheet).
+- Lead-time and "book earlier" insights; urgent request path.
+- Itinerary legs, same-day return hint, baggage need.
+- Request/approval statuses with the SAP request number.
+- Compliance dashboard with under- and over-use per region and person.
+- Synergy suggestions (same destination within N days).
+- Export to Excel and calendar (ICS) for individuals.
+
+## 8.4 Phase 3: Other functions and outcomes
+
+- Training, Quality, Legal, HR event catalogs and role scopes.
+- Joint trips across functions; shared visibility.
+- Trip outcomes (notes, links to documents) and completion tracking.
+- E-mail notifications and reminders.
+- Optional: reporting through Unity Catalog / Databricks dashboards.
+
+## 8.5 Later ideas
+
+- Integration with SAP or the travel desk once policies are standardized.
+- Travel entitlement rules (airfare, hotel, laundry, insurance) when agreed.
+- Cash advance vs. Grab codes choice.
+- What-if scenarios: compare two plan versions and their cost.
+
+## 8.6 Delivery approach
+
+- Short iterations with a demo every one to two weeks; first demo with seeded data.
+- A pilot group (Head of Field, three RMs, a few AMs) uses the tool for several weeks before wider rollout.
+- Feedback captured in the app (a "Send feedback" link) and reviewed weekly.
+- Documentation and in-app help are updated in the same change as the feature.
+
+## 8.7 Success measures
+
+- Share of trips in the plan that are entered at least 30 days before departure.
+- Number of merged or avoided trips through synergy suggestions.
+- Forecast versus actual cost per region (Phase 2).
+- Share of overrides with a reason (target 100%).
+- Weekly active planners; time to build a plan year.
