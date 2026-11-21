@@ -31,7 +31,7 @@ def pos_id(cat, code):
 
 def test_seeded_catalog(c):
     cat = catalog(c)
-    assert len(cat["event_types"]) == 15
+    assert len(cat["event_types"]) == 19
     meet = event(cat, "AM-FSV-MEET")
     assert meet["joint_visit"] == "partial"
     summaries = {r["rule_key"]: r["summary"] for r in meet["rules"]}

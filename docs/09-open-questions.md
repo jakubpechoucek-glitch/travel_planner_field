@@ -81,6 +81,12 @@ Decisions taken when the starting catalog was loaded. Each can be changed in the
 | K9 | "Joint visit: Partial" is stored as *Partly*; which functions join which trips is expressed in the participation table. | Events description |
 | K10 | Supervisors attend the year-end party (added to its participants; the template lists only AM, RM, Head, Training). | Activity: Area Manager to Supervisors |
 | K11 | The visited team does not travel for visits to them (supervisors at an area visit, the Area Manager at a region visit, supervisors at the Head's area tour). | Events description |
+| K12 | Special Area visit: one per region a year, preferably May, July or November; it counts as the region's Head visit (combined with the Regional Field Meeting). The text speaks of "3 per year, one per region"; the number follows the number of regions. | Head of Field note |
+| K13 | The specific area of a Special Area visit is chosen by the planner; "lock the region slot 12 months ahead and choose the area 60 days before" and the "2 diagnostic plus 1 benchmark" mix are not enforced. | Head of Field note |
+| K14 | Skip-level sessions: two per region a year, as a combined part of the Head's regional trip (info severity). Their length (60 to 90 minutes) is not stored. | Head of Field note |
+| K15 | Cross-region peer shadow: one per Regional Manager a year, added by hand (no quota rule). | Head of Field note |
+| K16 | Leadership alignment offsite: every 2 years from 2028, preferably November. The conference keeps its yearly quota until the business confirms that it is biennial (the note calls it "every 2 years"). | Head of Field note |
+| K17 | Travel-load guardrail: the Head of Field at most 16 trips a year (warn). The number 16 comes from "16+ times a year" in the note and is to be confirmed. The 30-day action follow-up is not in the application (trip outcomes are a later phase). | Head of Field note |
 
 ## 9.5 Generator findings
 

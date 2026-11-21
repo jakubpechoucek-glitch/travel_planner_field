@@ -80,8 +80,8 @@ def test_a_supervisor_sees_only_their_own_trips(plan):
     mine = plan.get("/api/my/trips", headers=SAM).json()
     trips = mine["trips"]
     assert mine["published"] and trips and mine["year"] == 2027
-    # nothing from other clusters: Sam's own cluster, his local office, or nationwide events
-    assert all("Alpha 1" in t["title"] or t["place"] in (None, "Alpha 1", "Port One") for t in trips)
+    # nothing from other clusters: his own cluster, local office or region (skip-level sessions), or nationwide events
+    assert all("Alpha 1" in t["title"] or t["place"] in (None, "Alpha 1", "Port One", "North") for t in trips)
     assert all(any(p["name"] == "Sam Stone" for p in t["participants"]) for t in trips)
     roles = {t["event"]: t["my_role"] for t in trips}
     assert roles["Area Visit"] == "traveler" or roles["Area Visit"] == "host"

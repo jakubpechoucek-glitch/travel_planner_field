@@ -112,7 +112,7 @@ No final entitlement rules were agreed, so they stay *informational* in the MVP.
 ## 4.7 The catalog in the application (Phase 1)
 
 The catalog described in this chapter is loaded as the **starting configuration** by migration `0003_event_catalog_seed.sql`:
-15 event types, who takes part in each (with the "2x" and "3x" limits), 19 rules, 5 merge rules, and tentative 2027 blackout periods.
+15 event types, who takes part in each (with the "2x" and "3x" limits), 19 rules, 5 merge rules, and tentative 2027 blackout periods; migration `0008` adds four leadership events (section 4.8).
 Everything is editable in the app (**Events and rules**, administrators only; everyone with access can read it).
 
 **What an administrator can change**
@@ -139,3 +139,19 @@ Blackout dates must fall in the plan year, and a closed plan year cannot be chan
 - The Head of Field limit of one trip a month is seeded as a *warning*, although the source also lists many more trips for the Head.
 - No weekly cap on area visits was seeded: the meeting asked for one but nobody gave a number.
 - Functions outside field collections (Coordinator, Legal, Quality, Training, HR, Head of Collections/Support) exist as positions so they can be listed as participants. Their own cadence rules (for example Quality every 6 to 8 weeks) come in Phase 3.
+
+## 4.8 Leadership time events
+
+Migration `0008_leadership_events.sql` adds, as starting configuration (all editable under **Events and rules**), the events the Head of Field asked for after reviewing the first plan:
+
+| Event | Code | Rule in the catalog | How it fits |
+|-------|------|---------------------|-------------|
+| **Special Area visit (with Analysts)** | `SPECIAL-AREA` | One per region a year, preferably May, July or November (`SA-QUOTA`, `SA-WINDOW`) | The Head of Field and the Analysts; the Regional Manager joins, the Area Manager hosts. Combined with the Regional Field Meeting, so it counts as that region's Head visit for the month and does not stack on it |
+| **Skip-level session** | `SKIP-LEVEL` | Two per region a year (`SKIP-QUOTA`, info) | The Head of Field with supervisors and Area Managers (hosts) without their direct manager. Held during the Head's regional trip, so combined with the Regional Field Meeting |
+| **Cross-region peer shadow** | `PEER-SHADOW` | No rule: added by hand | A Regional Manager joins a peer's region visit in another region, once a year. The application does not choose "another region" itself |
+| **Leadership alignment offsite** | `STRAT` | One a year in the years without the conference: every 2 years from 2028, preferably November (`STRAT-QUOTA`, `STRAT-WINDOW`) | Head of Field, Regional Managers and Analysts. Uses the *every N years* setting ([section 4.4](#44-rule-types-the-application-must-support)) |
+| **Travel-load guardrail** | rule `HEAD-TRIPS-YEAR` | The Head of Field travels at most 16 times a year (warn) | "Replace, don't stack": a new major event should be combined with or replace a routine visit; the rule warns when the Head's year gets too full |
+
+A new position, **Analyst**, takes part in the Special Area visits and the offsite. The generator's *combine* step is what makes "replace, don't stack" work: a combined event is absorbed into the bigger trip and stays visible as a combined row.
+
+**Not in the application yet** (see [open questions](09-open-questions.md#94-catalog-assumptions), K12 to K17): choosing the specific area 60 days before a Special Area visit (the slot is locked, the area is chosen by hand), the "2 diagnostic plus 1 benchmark" mix, the 30-day action follow-up, and the outputs of each forum.

@@ -360,6 +360,19 @@ Severity levels: **info** (for your attention), **warning** (the plan may stay a
 - Hosts have no travel cost. If a base or place is unknown, the trip is counted as travel by land, and the page tells you how many person-trips are affected.
 - The budget counts person-trips (people × frequency); the estimate counts the people who travel on the planned trips. Differences show where the plan and the budget assume different things.
 
+## 5.7 Leadership time events
+
+The starting catalog includes events that give the Head of Field time on the ground without adding trips on top of the routine ones. All of them can be changed under **Events and rules**.
+
+| Event | What it is | How it is planned |
+|---|---|---|
+| **Special Area visit (with Analysts)** | The Head of Field and the Analysts examine one area: what the dashboards say against what happens on the floor. | One per region a year, preferably May, July or November. It counts as that region's Head visit for the month (combined with the Regional Field Meeting). The planner chooses the area. |
+| **Skip-level session** | A 60 to 90 minute block with supervisors and Area Managers without their direct manager. | Two per region a year, held during the Head of Field's regional trip. |
+| **Cross-region peer shadow** | A Regional Manager joins a peer's region visit in another region. | One per Regional Manager a year. Add it by hand with **Add a trip**. |
+| **Leadership alignment offsite** | Two days for the Head of Field, Regional Managers and Analysts to reset KPIs and budgets. | Held every second year (the years without the conference), first in 2028, preferably November. |
+
+> **Note** Travel-load guardrail: the Head of Field's trips are limited to 16 a year (a warning, not a block). A new major event should be combined with, or replace, a routine visit instead of being added on top. The 30-day follow-up of actions and the exact choice of area 60 days ahead are not part of the application yet.
+
 # 6. Privacy and security
 
 - **No e-mail addresses and no phone numbers are stored.** Users are matched by a one-way code derived from the e-mail with a secret key.

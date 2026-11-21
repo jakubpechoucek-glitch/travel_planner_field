@@ -153,6 +153,9 @@ The app refuses to start in `prod` without `IDENTITY_KEY` and the three Lakebase
 
 ## 10.5 Database migrations
 
+Migration `0008_leadership_events.sql` is data only (events, rules and merge rules of the leadership time events); `0007` is the last schema change.
+
+
 - Files `db/migrations/NNNN_name.sql`, applied in order, once each, recorded in `travel.schema_migration`.
 - A migration runs in one transaction; a failure rolls it back and stops the start-up.
 - Applying is serialized with an advisory lock, so several app instances can start at once.
