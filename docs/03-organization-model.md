@@ -58,7 +58,7 @@ new frequencies, people leaving and joining. Therefore:
 
 | Source sheet / field | Target |
 |----------------------|--------|
-| EMP LIST FC upload: EMP NO, EMP NAME, USERNAME, POSITION | `person` (employee number, name, e-mail derived from username only if confirmed, position) |
+| EMP LIST FC upload: EMP NO, EMP NAME, USERNAME, POSITION | `person` (employee number, name, position); the login link is set later by an administrator |
 | EMP LIST FC upload: AM | `person.manager_id` (supervisor → AM) |
 | EMP LIST FC upload: REGION, AREA | `person.region_id`, `person.local_office_id` |
 | EMP LIST FC upload: CRM | RM of the person's region (check against `manager_id` chain) |

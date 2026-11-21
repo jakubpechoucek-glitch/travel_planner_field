@@ -31,12 +31,13 @@ One deployable unit: a Python API that also serves the built web UI. No separate
 
 ## 7.3 Authentication and authorization
 
-- **Authentication:** Databricks Apps puts the signed-in user's identity on every request (e-mail and user name headers).
+- **Authentication:** Databricks Apps puts the signed-in user's identity on every request (e-mail and user name headers). The e-mail is used only in memory to compute a keyed hash and is never stored or logged.
   The app trusts these headers only because the proxy is the only way in. **Verify** exact header names.
-- **Authorization:** the app maps the e-mail to `person`, loads `user_role` and computes the visible scope.
+- **Authorization:** the app maps the hash of the e-mail to `person.sso_key_hash`, loads `user_role` and computes the visible scope.
   Every query is filtered by that scope in one place (a dependency/service), never ad hoc per endpoint.
 - **Workspace access:** every user needs permission to open the app, and (normally) membership in the Databricks workspace/account.
   For several hundred supervisors this requires IT to provision users, usually through the company's identity provider group. **Verify early.**
+- **First administrator:** the hash of the bootstrap administrator is passed as a configuration value (`BOOTSTRAP_ADMIN_HASHES`), so someone can sign in and link everyone else.
 - **Local development:** a setting enables a fake identity header so the app can run on a laptop.
   This setting is rejected when the app runs in the Databricks environment.
 

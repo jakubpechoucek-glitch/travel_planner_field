@@ -1,7 +1,8 @@
 -- =============================================================================
--- Travel Planner for Field Teams: PostgreSQL schema (draft v0.1)
+-- Travel Planner for Field Teams: baseline migration 0001
 -- Target: PostgreSQL 15+ (Databricks Lakebase compatible). No extensions needed.
 -- See docs/06-data-model.md for the explanation of every table.
+-- E-mail addresses are NOT stored; users are matched by a keyed hash (sso_key_hash).
 -- =============================================================================
 
 CREATE SCHEMA IF NOT EXISTS travel;
@@ -45,12 +46,12 @@ CREATE TABLE location (
     UNIQUE (name, province)
 );
 
--- Identity of an employee. Contact numbers are intentionally NOT stored.
+-- Identity of an employee. Contact numbers and e-mail addresses are intentionally NOT stored.
 CREATE TABLE person (
     id          integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     employee_no text UNIQUE,
     full_name   text NOT NULL,
-    email       text,                                -- work e-mail; matched to the SSO identity
+    sso_key_hash text UNIQUE,                        -- HMAC-SHA256(lower(sso e-mail)); the e-mail itself is never stored
     active      boolean NOT NULL DEFAULT true,
     start_date  date,
     end_date    date,
@@ -58,7 +59,6 @@ CREATE TABLE person (
     updated_at  timestamptz NOT NULL DEFAULT now(),
     CHECK (end_date IS NULL OR start_date IS NULL OR end_date >= start_date)
 );
-CREATE UNIQUE INDEX person_email_uidx ON person (lower(email)) WHERE email IS NOT NULL;
 
 -- Effective-dated position, manager and unit of a person.
 CREATE TABLE person_assignment (
@@ -313,7 +313,6 @@ CREATE TABLE audit_log (
     id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     at              timestamptz NOT NULL DEFAULT now(),
     actor_person_id integer REFERENCES person(id),
-    actor_email     text,
     action          text NOT NULL,          -- e.g. 'rule.update', 'user.role.add', 'plan.publish'
     entity          text NOT NULL,
     entity_id       text,
@@ -327,7 +326,7 @@ CREATE INDEX audit_log_at_idx ON audit_log(at DESC);
 
 -- The assignment valid today for each active person.
 CREATE VIEW v_person_current AS
-SELECT p.id AS person_id, p.employee_no, p.full_name, p.email, p.active,
+SELECT p.id AS person_id, p.employee_no, p.full_name, p.active,
        a.position_id, pos.code AS position_code, pos.name AS position_name, pos.level,
        a.manager_id, a.region_id, a.cluster_id, a.local_office_id
 FROM person p

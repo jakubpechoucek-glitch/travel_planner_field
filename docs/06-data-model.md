@@ -1,6 +1,6 @@
 # 6. Data Model
 
-The database is **PostgreSQL 15+**. The full DDL is in [`db/schema.sql`](../db/schema.sql); it
+The database is **PostgreSQL 15+**. The DDL is in [`db/migrations/0001_baseline.sql`](../db/migrations/0001_baseline.sql); it
 loads cleanly on PostgreSQL 16 and uses no extensions, so it is compatible with Databricks Lakebase.
 All objects live in the `travel` schema.
 
@@ -35,7 +35,7 @@ cost_rate (Phase 2)        audit_log
 | `position` | Job positions and groups (Head of Field, RM, AM, FSV, Legal Specialist, ...) | `level` is used by rules; `is_traveler` is false for field collectors |
 | `org_unit` | Regions, clusters and local offices | Generic tree (`kind`, `parent_id`); a new layer is a new row, not a schema change |
 | `location` | Cities and provinces where trips happen | Linked to region and local office; filled from the *Reference* sheet |
-| `person` | Identity of an employee | Name, employee number, work e-mail, active flag. **No phone number.** |
+| `person` | Identity of an employee | Name, employee number, active flag, `sso_key_hash` (keyed hash used to match the SSO login). **No e-mail address, no phone number.** |
 | `person_assignment` | Effective-dated position, manager and unit | Plans use the assignment valid on the trip date; supports restructuring |
 | `meeting_group` / `_member` | Supervisors that meet together | An AM may have several groups |
 
@@ -106,7 +106,7 @@ are still `generated` and unedited.
 
 ## 6.6 Personal data
 
-- Stored: employee number, full name, work e-mail (needed for SSO matching), position, reporting line, office.
+- Stored: employee number, full name, position, reporting line, office, and a keyed hash of the SSO e-mail (`sso_key_hash`, HMAC-SHA256 with a secret held in a Databricks secret). **E-mail addresses are never stored**, in the database, logs or the audit log.
 - **Not stored:** phone numbers, hire dates, salary, collection capacity, anything from the field-collector (FTE) list beyond a head count per office.
 - The source workbooks contain personal data and stay outside the repository and outside the database.
 - Access to `person` data follows the role scopes in [Users, roles and access](02-users-roles-access.md).
@@ -116,5 +116,4 @@ are still `generated` and unedited.
 ## 6.7 Migrations
 
 Schema changes are versioned SQL migrations applied by the application at deployment (Alembic or a similar
-tool, to be chosen with the application framework). `db/schema.sql` is the baseline for version 0.1 and will be
-replaced by numbered migrations when the first release is cut.
+tool, to be chosen with the application framework). The baseline is `db/migrations/0001_baseline.sql`; further changes are added as numbered files and applied in order by `backend/travel_planner/migrate.py`, which records them in `travel.schema_migration`.

@@ -1,0 +1,27 @@
+# Databricks App definition (draft). VERIFY every item against the current
+# Databricks Apps documentation and the workspace setup before first deployment.
+command:
+  - uvicorn
+  - --factory
+  - travel_planner.main:create_app
+  - --app-dir
+  - backend
+  - --host
+  - 0.0.0.0
+  - --port
+  - "8000"
+
+env:
+  - name: APP_ENV
+    value: prod
+  # Secrets and database coordinates come from app resources, never from this file.
+  - name: IDENTITY_KEY
+    valueFrom: identity-key
+  - name: BOOTSTRAP_ADMIN_HASHES
+    valueFrom: bootstrap-admin-hashes
+  - name: PGHOST
+    valueFrom: lakebase-host
+  - name: PGDATABASE
+    valueFrom: lakebase-database
+  - name: PGUSER
+    valueFrom: lakebase-user

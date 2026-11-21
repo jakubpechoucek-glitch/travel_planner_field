@@ -10,6 +10,17 @@ intention of this tool, then add features step by step."* Expect **four to five 
 - Business owner reviews this documentation.
 - Set up repository, CI, local PostgreSQL, a first empty Databricks App deployment.
 
+Status (Lakebase confirmed as available):
+
+- [x] Repository, CI (GitHub Actions), local PostgreSQL (Docker), `Makefile`
+- [x] API skeleton (FastAPI), versioned SQL migrations, baseline schema
+- [x] Authentication by keyed hash of the SSO identity (no e-mail stored), bootstrap administrator
+- [x] Empty web UI (React + Vite) that shows sign-in status; served by the API
+- [x] Tests: health, identity, roles, migrations, database constraints
+- [ ] First deployment of the skeleton to a Databricks App (needs workspace owner)
+- [ ] Verify identity header and Lakebase credential flow on the real workspace
+- [ ] Data protection sign-off; user list and org chart received
+
 **Exit criteria:** an empty authenticated app is reachable by test users; data owner confirmed.
 
 ## 8.2 Phase 1: MVP (about 6 weeks)

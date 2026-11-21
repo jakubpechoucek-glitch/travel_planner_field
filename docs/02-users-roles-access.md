@@ -27,9 +27,9 @@ cost and comments stay within the owning scope.
 
 ## 2.2 Authentication
 
-- Users sign in through Databricks (SSO). The app receives the user's e-mail in the
+- Users sign in through Databricks (SSO). The app receives the user's identity in the
   request headers set by the Databricks Apps proxy; the app never handles passwords.
-- The e-mail is matched to a `person` record. If no match exists, the user sees a
+- **E-mail addresses are not stored.** The app computes a keyed hash (HMAC-SHA256 of the lower-cased e-mail) in memory and matches it to `person.sso_key_hash`. The hash is filled when an administrator links a person to a login (see below). If no match exists, the user sees a
   "You do not have access yet" page that explains how to request access.
 - Roles and scopes are looked up in the database on each request (cached briefly).
 
@@ -39,7 +39,8 @@ See [Architecture](07-architecture.md#73-authentication-and-authorization).
 
 Area managers join and leave. An administrator must be able to:
 
-- add a person, assign a position, manager, region/cluster/local office and role;
+- add a person and **link their login** (the administrator types the sign-in e-mail once; the server stores only its keyed hash, never the address);
+- assign a position, manager, region/cluster/local office and role;
 - deactivate a person on their end date (history is kept; future generated trips are flagged for review);
 - move a person to a new manager or cluster with an effective date;
 - import people in bulk from a spreadsheet (needed for the first load of roughly 120 supervisors and managers).

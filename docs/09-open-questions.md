@@ -9,7 +9,7 @@ Items are grouped by who can answer. "Blocking" means design or build cannot con
 | P1 | Is **Lakebase** enabled in the workspace? If not, which PostgreSQL can the app reach? | Yes |
 | P2 | Can all several hundred planned users (supervisors included) be given access to the Databricks workspace/app via SSO? Who provisions them? | Yes |
 | P3 | Which deployment method is allowed (Asset Bundles, CLI, CI)? Are there naming or tagging rules for apps? | No |
-| P4 | Data protection review: is storing names and work e-mails of employees in this app acceptable? Who is the data owner? | Yes |
+| P4 | Data protection review: is storing names and employee numbers in this app acceptable? (E-mail addresses are deliberately not stored; only a keyed hash is.) Who is the data owner? | Yes |
 | P5 | After the author's contract ends this year, who maintains the app and its database? | Yes, for the handover plan |
 
 ## 9.2 Business rules (Head of Field, regional managers, travel desk)
