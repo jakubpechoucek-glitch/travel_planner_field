@@ -1,0 +1,29 @@
+# Render Blueprint for a TRIAL installation outside Databricks (demo mode).
+# Not the production setup: production runs as a Databricks App on Lakebase.
+databases:
+  - name: travel-planner-db
+    plan: basic-256mb
+    region: singapore
+    postgresMajorVersion: "16"
+    ipAllowList: []          # internal connections only
+
+services:
+  - type: web
+    name: travel-planner
+    runtime: docker
+    plan: starter
+    region: singapore
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: demo
+      - key: DATABASE_URL
+        fromDatabase:
+          name: travel-planner-db
+          property: connectionString
+      - key: IDENTITY_KEY
+        generateValue: true
+      - key: DEMO_PASSCODE
+        sync: false            # entered when the Blueprint is approved
+      - key: DEMO_FIRST_LOGIN_ADMIN
+        value: "true"
