@@ -132,6 +132,8 @@ Migration `0006_costs.sql` adds the cost model (the existing `cost_rate` table h
 Migration `0009_area_choice_and_follow_up.sql`: `event_type.area_choice_days` and `event_type.follow_up_days` (nullable); `trip.area_pending`, `trip.area_decide_by` and `trip.area_focus` (`diagnostic` or `benchmark`);
 and the table `trip_action` (trip, title, due date, status `open`/`done`/`dropped`, close note, who and when). At most three actions per trip that are not dropped are enforced by the application.
 
+Migration `0010_synergy_dismissal.sql` adds `synergy_dismissal` (a pair of trips a planner dismissed as a synergy suggestion, with an optional reason).
+
 ## 6.8 Migrations
 
 Migration `0004_plan_generation.sql` adds `event_type_position.travels` (a visited team is a host, not a traveler) and `blackout_period.caused_by_event_type_id` (the event held in that period, for example the conference), and corrects two seed rules (see [open questions](09-open-questions.md#94-catalog-assumptions)).

@@ -133,6 +133,11 @@ The app proposes, but never forces:
 Suggestions appear in the *Synergies* view and as hints on the trip form. Accepting a suggestion is a normal
 manual change and records its reason automatically.
 
+**Implemented (Plan → Synergies).** The first kind (same destination, close dates) and, as a ranking, the second: two trips to the same place (the same travel hub or, without a hub, the same visited unit)
+that are 1 to 60 days apart (default 14, chosen on the page). Trips that are combined, cancelled, finished or that overlap are left out. Each suggestion shows the place, both trips, the days between them and the people
+who travel on both; those with shared travelers come first. The planner opens a trip and moves it (a normal change with a reason) or **dismisses** the pair with an optional reason (table `synergy_dismissal`, migration `0010`); a dismissed pair does not come back.
+Planners see suggestions for their own scope. The joint-trip and company-event kinds are not built yet (the plan checks already report trips in blackout periods).
+
 ## 5.6 Trip status
 
 | Status | Meaning |

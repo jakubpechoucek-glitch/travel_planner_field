@@ -80,7 +80,7 @@ Implemented on the **Users** page (administrators only; `backend/travel_planner/
 | **Timeline** | Planners | Rows = people, columns = days; bars for trips; blackout periods shaded |
 | **Follow-ups** | Planners (own scope) | Trips with a follow-up: actions still to be recorded, in progress, late or closed (Plan → Follow-ups) |
 | **Compliance** | RM, Head | Trips versus minimum and maximum per event type, per unit; highlights under- and over-use |
-| **Synergies** | Planners | Suggested merges or moves (same destination, nearby dates) |
+| **Synergies** | Planners (own scope) | Suggested merges or moves: trips to the same place a few days apart, with the people who travel on both (Plan → Synergies) |
 | **Events and rules** | Everyone with access (read), Administrator (edit) | The event catalog, rules and blackout periods |
 | **Organization** | Administrator, National planner | Regions, clusters, leaders, supervisor counts. Administrators also import the structure here |
 | **Administration** | Administrator | Users, org structure, event types, rules, blackout periods, plan years |

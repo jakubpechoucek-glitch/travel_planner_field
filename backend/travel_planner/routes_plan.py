@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from . import actions, plan_export
+from . import actions, plan_export, synergy
 from . import plan_store as store
 from . import trip_edit as edit
 from .access import allowed_units, has_plan_access
@@ -211,6 +211,20 @@ def add_action(trip_id: int, body: actions.ActionIn, request: Request, who: Iden
 def update_action(action_id: int, body: actions.ActionUpdate, request: Request,
                   who: Identity = Depends(plan_access)) -> dict:
     return _db(request, lambda conn, allowed: actions.update_action(conn, action_id, body, who, allowed),
+               commit=True, who=who, scoped=True)
+
+
+@router.get("/plan/{year}/synergies")
+def synergies(year: int, request: Request, within_days: int = Query(synergy.DEFAULT_DAYS, ge=1, le=60),
+              who: Identity = Depends(plan_access)) -> dict:
+    return _db(request, lambda conn, allowed: synergy.suggestions(conn, year, allowed, within_days),
+               who=who, scoped=True)
+
+
+@router.post("/plan/{year}/synergies/dismiss")
+def dismiss_synergy(year: int, body: synergy.DismissIn, request: Request,
+                    who: Identity = Depends(plan_access)) -> dict:
+    return _db(request, lambda conn, allowed: synergy.dismiss(conn, year, body, who, allowed),
                commit=True, who=who, scoped=True)
 
 

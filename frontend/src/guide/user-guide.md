@@ -170,6 +170,15 @@ Visits such as the Special Area visit, the Regional Field Meeting and the Head o
 2. When an action is done, select **Mark done** and add a short note. **Drop** removes an action that is no longer needed and frees a place; **Reopen** brings it back.
 3. Open **Plan → Follow-ups** to see all trips with a follow-up: *Late*, *No actions yet*, *In progress*, *Not yet* and *Closed*. Late ones come first. Home shows a short summary.
 
+### Synergies: travel once instead of twice
+
+Open **Plan → Synergies** to see trips to the same place that are only a few days apart. Together they may need one journey instead of two, and fares can be booked earlier.
+
+1. Choose how many days apart the trips may be (1 to 60, default 14).
+2. Read each row: the place, the first trip, the second trip and the days between them. A badge such as **6 travel twice** shows how many people are on both trips; those rows come first.
+3. Select a trip title to open it. To hold the trips together, use **Change this trip** and give the reason as for any change.
+4. If the trips belong apart, select **Dismiss** and, if you like, say why. The suggestion does not come back.
+
 ### Other trip actions
 
 | Action | What it does |
@@ -409,6 +418,7 @@ The starting catalog includes events that give the Head of Field time on the gro
 | Why does the cost page not show a budget? | Only administrators and national planners see the budget, and it must be loaded first. |
 | Why is an event missing from the generated plan? | It has no yearly quota or cadence rule, it is held only every second year and this is an off year, or the place does not have enough clusters for its rotation rule. The Generate preview lists these cases. |
 | Why does a trip show a whole region instead of an area? | Its area is chosen later. Planners choose it in the trip before the date shown (section 4.2). |
+| Why does the application suggest moving a trip? | Another trip goes to the same place within a few days (Plan → Synergies). It is only a hint: you can dismiss it. |
 | Where do I see actions that are still open? | Plan → Follow-ups lists the trips with open or missing actions; Home shows a summary. |
 | Where is the plan for next year? | An administrator or national planner opens it with Plan → Open plan year. Then choose it in the Plan year list. |
 | Can I undo a change? | Open the trip, change it back and give a reason. The history keeps every step. |

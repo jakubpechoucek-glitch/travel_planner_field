@@ -3,6 +3,7 @@ import { api } from "./api";
 import { AddTrip, TripPanel } from "./TripPanel";
 import Timeline from "./Timeline";
 import FollowUps from "./FollowUps";
+import Synergies from "./Synergies";
 import { Icon } from "./icons";
 
 type Row = { unit_id: number | null; label: string; months: number[] };
@@ -58,7 +59,7 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
   const [withCancelled, setWithCancelled] = useState(false);
   const [tick, setTick] = useState(0);
   const [warnings, setWarnings] = useState<WarningSet | null>(null);
-  const [view, setView] = useState<"timeline" | "heatmap" | "followups">("timeline");
+  const [view, setView] = useState<"timeline" | "heatmap" | "followups" | "synergies">("timeline");
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/plan/${year}/summary`);
@@ -73,6 +74,10 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
     setSummary(null); setSel(null); setOpenId(null); setWarnings(null); setError(null);
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (openId !== null) setTimeout(() => document.getElementById("trip-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }, [openId]);
 
   const nextYear = years.length ? Math.max(...years.map((y) => y.year)) + 1 : year + 1;
   const openYear = async () => {
@@ -141,6 +146,9 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
         <p>
           <strong>Plan years.</strong> Use the <em>Plan year</em> list at the top to switch years. <em>Open plan year</em> adds the next year as an empty draft. An event that is held only every
           second year (set in Events and rules) is planned in its years only; in the other years the preview lists it as <em>not held in that year</em>.
+        </p>
+        <p>
+          <strong>Synergies.</strong> The <em>Synergies</em> view lists trips to the same place that are a few days apart (you choose how many). People who travel on both are shown first. Open a trip to move it, or dismiss a suggestion that does not fit.
         </p>
         <p>
           <strong>Choosing an area later.</strong> A Special Area visit first holds a date for the whole region. Open it and choose the area before the date shown; you can mark the area as diagnostic or benchmark.
@@ -225,8 +233,10 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
             <button type="button" className={view === "timeline" ? "on" : ""} onClick={() => setView("timeline")}>Timeline</button>
             <button type="button" className={view === "heatmap" ? "on" : ""} onClick={() => setView("heatmap")}>Heatmap by month</button>
             <button type="button" className={view === "followups" ? "on" : ""} onClick={() => setView("followups")}>Follow-ups</button>
+            <button type="button" className={view === "synergies" ? "on" : ""} onClick={() => setView("synergies")}>Synergies</button>
           </div>
           {view === "followups" && <FollowUps year={year} tick={tick} onOpen={setOpenId} />}
+          {view === "synergies" && <Synergies year={year} tick={tick} onOpen={setOpenId} />}
           {view === "timeline" && <Timeline year={year} summary={summary} tick={tick} onOpen={setOpenId} />}
           {view === "heatmap" && (
           <div className="heatwrap">
@@ -292,7 +302,7 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
       )}
 
       {!sel && openId !== null && (
-        <section className="card"><TripPanel id={openId} onChanged={changed} onClose={() => setOpenId(null)} /></section>
+        <section className="card" id="trip-panel"><TripPanel id={openId} onChanged={changed} onClose={() => setOpenId(null)} /></section>
       )}
 
       {warnings && <Checks w={warnings} />}

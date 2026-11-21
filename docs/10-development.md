@@ -60,6 +60,13 @@ curl -X POST "http://localhost:8000/api/admin/plan/2027/generate?commit=false"  
 
 A rule is held every N years with `params.every_n_years` and `params.first_year` (quota and cadence rules only); the generator skips the event in the other years and reports it under *skipped*.
 
+## 10.3c-3 Synergy suggestions (API)
+
+| Endpoint | Who | Purpose |
+|----------|-----|---------|
+| `GET /api/plan/{year}/synergies?within_days=14` | planners (own scope) | Pairs of trips to the same place up to N days apart (1 to 60), with the people who travel on both |
+| `POST /api/plan/{year}/synergies/dismiss` `{trip_a, trip_b, reason?}` | planners who can change one of the trips | Hide a pair for good |
+
 ## 10.3c-2 Area choice and follow-up (API)
 
 | Endpoint | Who | Purpose |

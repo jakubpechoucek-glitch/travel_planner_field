@@ -53,7 +53,8 @@ Progress:
 - [x] **Cost estimate** from the plan with the budget's own formula, plan against budget, early-booking effect, rates and travel modes, and cost columns in the Excel export
 - [x] **Events held every N years** (for example a biennial conference or an off-year meeting): *Which years* setting on quota and cadence rules, plan years opened from the Plan page, year selector
 - [x] **Choosing the area later** (Special Area visits hold a region slot) and **follow-up of actions** (up to three per trip, closed within 30 days), with the *Follow-ups* view
-- [ ] People timeline; synergy suggestions; "suggest a change" from a supervisor to the manager
+- [x] **Synergy suggestions** (same place, close dates; dismissable)
+- [ ] People timeline; "suggest a change" from a supervisor to the manager
 
 **Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.
 
@@ -65,7 +66,7 @@ Progress:
 - Itinerary legs, same-day return hint, baggage need.
 - Request/approval statuses with the SAP request number.
 - Compliance dashboard with under- and over-use per region and person.
-- Synergy suggestions (same destination within N days).
+- ~~Synergy suggestions (same destination within N days)~~ **Done** (Plan → Synergies).
 - Export to Excel and calendar (ICS) for individuals.
 
 ## 8.4 Phase 3: Other functions and outcomes
