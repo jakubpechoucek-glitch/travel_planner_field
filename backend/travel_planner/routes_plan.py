@@ -10,8 +10,10 @@ from __future__ import annotations
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import Response
 from pydantic import BaseModel
 
+from . import plan_export
 from . import plan_store as store
 from . import trip_edit as edit
 from .access import allowed_units, has_plan_access
@@ -99,6 +101,29 @@ def trips(year: int, request: Request, unit_id: int | None = None, month: int | 
           event_type_id: int | None = None, nationwide: bool = False,
           who: Identity = Depends(plan_access)) -> list[dict]:
     return _db(request, store.plan_trips, year, unit_id, month, event_type_id, nationwide, 500, who=who, scoped=True)
+
+
+XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+@router.get("/plan/{year}/export.xlsx")
+def export_xlsx(year: int, request: Request, include: Literal["", "cancelled"] = "",
+                who: Identity = Depends(plan_access)) -> Response:
+    """The plan as an Excel workbook, limited to the caller's scope. Exports are written to the audit log."""
+    with request.app.state.pool.connection() as conn:
+        try:
+            allowed = allowed_units(conn, who)
+            content = plan_export.export(conn, year, allowed, who.person_id, include_cancelled=include == "cancelled",
+                                         with_checks=allowed is None)
+            conn.commit()
+        except CatalogError as exc:
+            conn.rollback()
+            raise HTTPException(status_code=exc.status, detail=str(exc)) from exc
+        except Exception:
+            conn.rollback()
+            raise
+    return Response(content, media_type=XLSX,
+                    headers={"Content-Disposition": f'attachment; filename="travel-plan-{year}.xlsx"'})
 
 
 @router.get("/plan/places")

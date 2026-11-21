@@ -93,6 +93,12 @@ Once real administrators have a linked sign-in and the role, remove that setting
 | `GET /api/my/trips.ics?year=` | the same | iCalendar file of the caller's trips (cancelled trips are left out; 404 until published) |
 | `POST /api/admin/plan/{year}/status` `{status}` | administrators, national planners | `published` (from review), `review` (withdraw), `closed` (from published) |
 
+## 10.3f Excel export (API)
+
+`GET /api/plan/{year}/export.xlsx[?include=cancelled]` for anyone with plan access (administrator, national, regional and area planner); scoped as the plan page is,
+`Checks` only for the whole-plan roles. The workbook is built with openpyxl in `backend/travel_planner/plan_export.py` and tested in `backend/tests/test_plan_export.py`
+(structure, agreement with the plan, real dates, no formulas from text, scope, audit).
+
 ## 10.4 Configuration
 
 | Variable | Used in | Meaning |

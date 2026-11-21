@@ -133,7 +133,17 @@ Decisions taken while building the editing; please confirm:
 | M6 | Supervisors cannot change anything. To ask for a change they contact their manager. | A "suggest a change" button that notifies the planner |
 | M7 | The plan has working days only and no public holidays, so a trip can fall on a holiday. | Add the holiday calendar (G6) |
 
-## 9.9 Product and design
+## 9.9 Excel export decisions
+
+| # | Decision | Alternative |
+|---|----------|-------------|
+| X1 | The workbook is a snapshot of values. It does not refresh and has no formulas. | Add live formulas for totals so that edits in Excel recalculate |
+| X2 | It contains names of people. It is limited to the caller's scope and every export is in the audit log. Once downloaded, the file is outside the application's control. | Remove names from exports for regional and area planners; add a watermark with the exporter |
+| X3 | There are no costs yet. Days away and nights per person and trip are included so that a budget can be built from them. | Add the cost forecast (Phase 2) and the layout of the *Traveling Plan Budget 2027* sheet (event, position, count, frequency, unit price) |
+| X4 | The SAP request column is empty until request numbers are tracked. | Import SAP numbers from the travel desk |
+| X5 | Days are calendar days (start to end inclusive); nights are days minus one. Public holidays are not considered. | Working days, or the company's own definition of days out of office |
+
+## 9.10 Product and design
 
 | # | Question |
 |---|----------|
@@ -144,7 +154,7 @@ Decisions taken while building the editing; please confirm:
 | U5 | Notifications: e-mail only, or also Microsoft Teams? (Not in MVP.) |
 | U6 | Time to retain trip history after the plan year closes? |
 
-## 9.10 Next steps
+## 9.11 Next steps
 
 1. Business owner reviews documents 1 to 5 and answers B1 to B12, P1 to P5.
 2. Follow-up meeting (the Thursday session proposed at the kickoff) to walk through the calendar views.

@@ -49,6 +49,7 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
   const [trips, setTrips] = useState<TripRow[] | null>(null);
   const [openId, setOpenId] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
+  const [withCancelled, setWithCancelled] = useState(false);
   const [tick, setTick] = useState(0);
   const [warnings, setWarnings] = useState<WarningSet | null>(null);
 
@@ -127,6 +128,10 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
           <strong>Publishing.</strong> A plan under review is visible to planners only. <em>Publish plan</em> makes everyone's own trips visible in <em>My plan</em>;
           from then on the plan is not generated again, and your changes are marked "after publication" in the history of a trip.
         </p>
+        <p>
+          <strong>Export to Excel</strong> downloads the plan you can see as a workbook: a summary by place and month, every trip, the people on the trips, days away per person,
+          every manual change with its reason, and the rule checks. It is a snapshot and contains the trips of your own area only if you are a regional or area planner.
+        </p>
         <p>The plan uses working days only (Monday to Friday) and does not know public holidays yet.</p>
       </details>
 
@@ -144,8 +149,17 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
               </p>
             )}
           </div>
-          {!adding && <button onClick={() => setAdding(true)}>Add a trip</button>}
+          <div className="row">
+            {summary && summary.totals.trips > 0 && (
+              <a className="button secondary" href={`/api/plan/${year}/export.xlsx${withCancelled ? "?include=cancelled" : ""}`}
+                download>Export to Excel</a>
+            )}
+            {!adding && <button onClick={() => setAdding(true)}>Add a trip</button>}
+          </div>
         </div>
+        {summary && summary.totals.trips > 0 && (
+          <label className="check"><input type="checkbox" checked={withCancelled} onChange={(e) => setWithCancelled(e.target.checked)} /> Include cancelled and combined trips in the Excel file</label>
+        )}
         {canGenerate && summary && summary.totals.trips > 0 && (
           <p className="row">
             {summary.status === "review" && (

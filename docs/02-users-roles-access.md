@@ -72,6 +72,7 @@ Implemented on the **Users** page (administrators only; `backend/travel_planner/
 
 | View | Audience | Content |
 |------|----------|---------|
+| **Export to Excel** | Administrators, national, regional and area planners | The plan they can see as a workbook (see [Planning workflow](05-planning-workflow.md#59-excel-export)); every export is written to the audit log |
 | **My plan** | Everyone with a linked sign-in (supervisors land here) | The trips the person takes part in, as organizer, traveler or host, grouped by month; the next trip; status (proposed, confirmed, done, cancelled); the original date and the reason when a trip was moved or changed; who else is on the trip; calendar export (.ics). Supervisors see it once the plan is published; planners see their own trips while it is under review. Cancelled and earlier trips are folded away |
 | **Plan (own scope)** | Regional and area planners | The heatmap, trips and history of their own units; they can change those trips (see [Planning workflow](05-planning-workflow.md#53-manual-changes-and-reasons)). Plan-wide checks and plan generation stay with administrators and national planners |
 | **Calendar heatmap** | Planners | Rows = region/cluster/area, columns = month or week, cells = number of trips; click to drill down |

@@ -160,3 +160,27 @@ Every screen has a **Help** panel and contextual tooltips in American English, c
 - a short glossary and a "Getting started" tour on first sign-in.
 
 Help content is stored as Markdown in the repository (`docs/user-guide/`, later) and rendered inside the app.
+
+## 5.9 Excel export
+
+**Plan → Export to Excel** (or `GET /api/plan/{year}/export.xlsx`) downloads the plan as a workbook for planning meetings, budget work and approvals
+(`backend/travel_planner/plan_export.py`). It is a snapshot with values, not formulas.
+
+| Sheet | Content |
+|-------|---------|
+| About | What the file contains, plan status, export time, and what is left out |
+| Summary | Trips per month by place (a heatmap) with totals; trips by event with the number merged into bigger trips and the days away |
+| Trips | One row per trip: event, region, cluster, local office, start, end, days, nights, status, source (rules or by hand), organizer, number of travelers and hosts, transport, the dates by the rules and whether the trip was moved, last reason, combined events, notes, SAP request |
+| People on trips | One row per person per trip: role (organizer, traveler, host), whether they travel, days away and nights |
+| Per person | Trips, days away, nights and trips per month for every person who travels, with a heat scale |
+| Changes | Every manual change: when, who, kind, type of reason and the reason |
+| Checks | The rule warnings of the saved plan (only for people who see the whole plan) |
+
+**Rules of the export**
+
+- It follows your **scope**: a regional or area planner gets the trips of their own area plus the nationwide events. People outside the area are named only on trips in the area, never on nationwide trips, and are left out of *Per person*.
+- *Include cancelled and combined trips* adds those rows, with the status "Cancelled" or "Combined into another trip" and the reason.
+- All text is written as text, so a note that starts with "=" can never run as a formula. No e-mail addresses or phone numbers are in the file (the database does not have them).
+- Dates are real Excel dates; days are calendar days from start to end, nights are days minus one.
+- Every export is recorded in the audit log (who, how many trips, whole plan or an area). The file contains names, so please treat it as internal.
+
