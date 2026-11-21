@@ -64,6 +64,22 @@ These points need a business decision:
 | I5 | The RM's own local office ("Mexico" for one RM) is a base, not a region. | Stored as the RM's base office (the office itself is taken from the AM and supervisor tables, which carry its region). |
 | I6 | Provinces (the *Reference* sheet) are not imported yet: its "area" names (*West Visayas*, *East Visayas*) do not match the cluster names (*Visayas West*, *Cebu*). | Local offices are loaded as locations. Provinces follow once the cluster names are agreed (D1). |
 
+## 9.5 Catalog assumptions
+
+Decisions taken when the starting catalog was loaded. Each can be changed in the app, but the business should confirm them:
+
+| # | Assumption | Source |
+|---|------------|--------|
+| K1 | Area visit: 6 to 12 per cluster a year, default spacing two months. Area meeting: exactly 6 per cluster, every two months. | Events description |
+| K2 | Region visit: 4 per Area Manager a year (quarterly). Region management meeting: 3 per cluster, every four months, rotating through 4 to 5 clusters per region each quarter. | Events description |
+| K3 | Lakbay: 3 a year per region in 3 different clusters. Conference: 1 a year. Year-end party: 1 per cluster, preferably November to January. | Events description |
+| K4 | Field Leader's Collections University: 2 sessions per cluster a year (one per half). | Events description |
+| K5 | Head of Field area tour: every local office once a year. Regional Field Meeting: quarterly, labelled per region (the source is unclear). | Travel Plans |
+| K6 | Regional Manager: at most 2 trips a month (warn). Head of Field: at most 1 trip a month (warn); this conflicts with the 18 trips in the Travel Plans (see B2). | Position rules |
+| K7 | Conference in April and the year-end party in December 2027 are placeholders for the blackout periods. | Travel Plans (planned month) |
+| K8 | All quota and cap rules default to *warn*, as asked in the meeting ("a prompt when you have exceeded the frequency"). Rotation, cadence and window rules default to *info*. | Meeting |
+| K9 | "Joint visit: Partial" is stored as *Partly*; which functions join which trips is expressed in the participation table. | Events description |
+
 ## 9.4 Product and design
 
 | # | Question |

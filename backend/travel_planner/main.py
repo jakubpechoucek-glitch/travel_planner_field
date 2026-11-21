@@ -8,7 +8,8 @@ import time
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.responses import FileResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -17,6 +18,7 @@ from .config import Settings, get_settings
 from .db import create_pool
 from .identity import SESSION_COOKIE, Identity, key_hash, make_session, resolve_identity
 from .migrate import apply_migrations
+from .routes_catalog import router as catalog_router
 from .routes_org import router as org_router
 
 log = logging.getLogger("travel_planner")
@@ -45,6 +47,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="Travel Planner for Field Teams", version=__version__, lifespan=lifespan)
     app.state.settings = settings
     app.include_router(org_router)
+    app.include_router(catalog_router)
+
+    @app.exception_handler(RequestValidationError)
+    async def friendly_validation_error(_: Request, exc: RequestValidationError):
+        parts = [f"{'.'.join(str(x) for x in e['loc'][1:]) or 'request'}: {e['msg']}" for e in exc.errors()]
+        return JSONResponse(status_code=422, content={"detail": "Please check the form. " + "; ".join(parts)})
 
     @app.get("/api/health")
     def health() -> dict:

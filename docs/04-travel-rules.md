@@ -99,3 +99,34 @@ No final entitlement rules were agreed, so they stay *informational* in the MVP.
 | Baggage based on actual need | Trip attribute "baggage needed" (Phase 2) |
 | Entitlements (airfare, hotel, laundry, insurance, cash advance) undecided | Out of scope; cost rates are configurable placeholders |
 | Cash advance vs. Grab codes undecided | Out of scope |
+
+## 4.7 The catalog in the application (Phase 1)
+
+The catalog described in this chapter is loaded as the **starting configuration** by migration `0003_event_catalog_seed.sql`:
+15 event types, who takes part in each (with the "2x" and "3x" limits), 19 rules, 5 merge rules, and tentative 2027 blackout periods.
+Everything is editable in the app (**Events and rules**, administrators only; everyone with access can read it).
+
+**What an administrator can change**
+
+- *Event type:* name, description, organizer, who is visited, whether others join, typical length and transport, planning notes, company event, active.
+- *Who takes part:* a table of positions with *takes part*, *organizer* and *yearly limit*.
+- *Combined with:* which other events it is merged into when both happen in the same place.
+- *Rules per event* and *limits for all events* (for example the number of trips per month for a position).
+- *Blackout periods* per plan year, for all events or selected ones.
+
+**Rule kinds in the editor:** yearly quota, cadence, preferred months, rotation, limit for a position (yearly limit), trip limit per person or
+position, and a limit on events at the same time. Each rule is shown as one readable sentence (for example "6 to 12 per year for each cluster.")
+and carries a **severity**: *Info* (a note), *Warn* (confirmation and a reason), *Block* (cannot be saved).
+
+**Versioning.** Editing a rule never rewrites it: the old version is retired (kept for history) and a new version is created. Removing a rule retires it.
+Every change to the catalog is written to the audit log (event type or rule key and counts, no personal data).
+
+**Checks.** The server refuses incomplete or contradictory rules with a plain-English message (for example "Enter a minimum, a maximum, or both.").
+Blackout dates must fall in the plan year, and a closed plan year cannot be changed. Codes of event types are unique.
+
+**Decisions made while loading the starting catalog** (please confirm; see [open questions](09-open-questions.md#95-catalog-assumptions)):
+
+- The two blackout months (April and December 2027) are placeholders taken from the 2027 Travel Plans. The rule "not in the month of the conference or year-end party" is expressed as blackout periods rather than as a rule that depends on other events.
+- The Head of Field limit of one trip a month is seeded as a *warning*, although the source also lists many more trips for the Head.
+- No weekly cap on area visits was seeded: the meeting asked for one but nobody gave a number.
+- Functions outside field collections (Coordinator, Legal, Quality, Training, HR, Head of Collections/Support) exist as positions so they can be listed as participants. Their own cadence rules (for example Quality every 6 to 8 weeks) come in Phase 3.

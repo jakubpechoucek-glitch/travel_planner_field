@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import Catalog from "./Catalog";
 import Org from "./Org";
 
 type Me = { signed_in: boolean; linked: boolean; has_access: boolean; name: string | null; roles: string[] };
@@ -10,7 +11,7 @@ type State =
 
 export default function App() {
   const [state, setState] = useState<State>({ kind: "loading" });
-  const [tab, setTab] = useState<"home" | "org">("home");
+  const [tab, setTab] = useState<"home" | "org" | "catalog">("home");
 
   const load = useCallback(async () => {
     try {
@@ -40,6 +41,8 @@ export default function App() {
     setState({ kind: "signin" });
   };
 
+  const hasAccess = state.kind === "ready" && state.me.has_access;
+  const isAdmin = state.kind === "ready" && state.me.roles.includes("administrator");
   const canSeeOrg =
     state.kind === "ready" && state.me.roles.some((r) => r === "administrator" || r === "national_planner");
 
@@ -49,14 +52,18 @@ export default function App() {
         <h1>Travel Planner</h1>
         <p className="tagline">Plan field travel early, together, and at lower cost.</p>
       </header>
-      {canSeeOrg && (
+      {hasAccess && (
         <nav className="tabs" aria-label="Main">
           <button className={tab === "home" ? "tab on" : "tab"} onClick={() => setTab("home")}>Home</button>
-          <button className={tab === "org" ? "tab on" : "tab"} onClick={() => setTab("org")}>Organization</button>
+          <button className={tab === "catalog" ? "tab on" : "tab"} onClick={() => setTab("catalog")}>Events and rules</button>
+          {canSeeOrg && (
+            <button className={tab === "org" ? "tab on" : "tab"} onClick={() => setTab("org")}>Organization</button>
+          )}
         </nav>
       )}
-      {canSeeOrg && tab === "org" && <Org isAdmin={state.kind === "ready" && state.me.roles.includes("administrator")} />}
-      <section className="card" aria-live="polite" hidden={canSeeOrg && tab === "org"}>
+      {hasAccess && tab === "catalog" && <Catalog isAdmin={isAdmin} />}
+      {canSeeOrg && tab === "org" && <Org isAdmin={isAdmin} />}
+      <section className="card" aria-live="polite" hidden={hasAccess && tab !== "home"}>
         {state.kind === "loading" && <p>Loading…</p>}
         {state.kind === "error" && <p className="problem">{state.message}</p>}
         {state.kind === "signin" && <SignIn onDone={load} />}

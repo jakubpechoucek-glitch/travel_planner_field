@@ -42,8 +42,9 @@ Progress:
 
 - [x] **Organization import** (workbook → regions, clusters, local offices, people, reporting lines, effective dating, preview, audit)
 - [x] Organization page with structure view and in-app help
+- [x] **Event catalog and rules**: starting catalog loaded, admin screens for event types, participation, rules (versioned), merge rules and blackouts, in-app help
 - [ ] Admin screens for users, roles and login linking
-- [ ] Event catalog and rules (admin screens), generator, calendar views, manual editing, warnings
+- [ ] Plan generator, calendar views, manual editing, warnings
 
 **Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.
 

@@ -29,12 +29,13 @@ def test_trip_constraints():
     import pytest
 
     with psycopg.connect(TEST_DB, autocommit=True) as conn:
-        conn.execute("INSERT INTO travel.plan_year(year) VALUES (2027)")
+        conn.execute("INSERT INTO travel.plan_year(year) VALUES (2027) ON CONFLICT DO NOTHING")
         conn.execute("INSERT INTO travel.event_type(code, name) VALUES ('X', 'x')")
+        event_id = conn.execute("SELECT id FROM travel.event_type WHERE code = 'X'").fetchone()[0]
         with pytest.raises(psycopg.errors.CheckViolation):  # end before start
             conn.execute(
                 "INSERT INTO travel.trip(plan_year, event_type_id, title, start_date, end_date)"
-                " VALUES (2027, 1, 't', '2027-03-02', '2027-03-01')"
+                f" VALUES (2027, {event_id}, 't', '2027-03-02', '2027-03-01')"
             )
         with pytest.raises(psycopg.errors.CheckViolation):  # cancelled without a reason
             conn.execute(
