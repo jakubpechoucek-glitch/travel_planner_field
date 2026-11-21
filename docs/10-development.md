@@ -53,6 +53,21 @@ without a database for experiments; `backend/tests/test_plan_engine.py` shows ho
 curl -X POST "http://localhost:8000/api/admin/plan/2027/generate?commit=false"   # preview (nothing saved)
 ```
 
+## 10.3c Changing trips (API)
+
+All under `/api/plan` and limited by role scope (`backend/travel_planner/access.py`):
+
+| Call | Purpose |
+|------|---------|
+| `POST /trips/{id}/edit?commit=false` | Preview (default) or save a change of dates, notes, title or people. Returns the new warnings; `commit=true` needs `acknowledge` when there are *warn* warnings |
+| `POST /trips/{id}/cancel?commit=` | Cancel with a reason |
+| `POST /trips/{id}/status` | Confirm a generated trip or mark it as done |
+| `POST /{year}/trips?commit=` | Add a trip by hand (default people come from the catalog) |
+| `GET /trips/{id}`, `GET /trips/{id}/history` | Detail with an `updated_at` token, and the change history |
+| `GET /places`, `GET /people?q=` | Places and people the caller may use |
+
+Every change body has `reason` (3 to 500 characters), `category` and optionally `expected_updated_at` (the token from the detail).
+
 ## 10.4 Configuration
 
 | Variable | Used in | Meaning |

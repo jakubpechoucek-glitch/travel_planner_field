@@ -107,3 +107,14 @@ table.trips { width: 100%; border-collapse: collapse; margin: 8px 0; }
 table.trips th, table.trips td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
 details.check { margin: 6px 0; }
 details.check summary { cursor: pointer; font-weight: 600; }
+.impact { border: 1px dashed var(--border); border-radius: 10px; padding: 8px 14px; }
+.impact h4 { margin: 4px 0; }
+.good { color: #1b7f3b; }
+.editbox { display: grid; gap: 12px; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 8px; }
+.chip.gone { text-decoration: line-through; opacity: 0.6; }
+.chip button.link { margin-left: 6px; font-size: 12px; }
+button.secondary { background: var(--surface); color: var(--accent); border: 1px solid var(--accent); }
+ul.hist { list-style: none; padding: 0; display: grid; gap: 8px; }
+ul.hist li { border-left: 3px solid var(--border); padding: 2px 10px; }
+ul.found { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 2px; }
+.picker { display: grid; gap: 4px; }

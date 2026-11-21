@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AddTrip, TripPanel } from "./TripPanel";
 
 type Row = { unit_id: number | null; label: string; months: number[] };
 type Summary = {
@@ -10,12 +11,7 @@ type Summary = {
 };
 type TripRow = {
   id: number; title: string; start_date: string; end_date: string; status: string; source: string;
-  notes: string | null; event: string; travelers: number; merged_count: number;
-};
-type Detail = {
-  id: number; title: string; event: string; status: string; start_date: string; end_date: string; notes: string | null;
-  participants: { name: string; role: string; travels: boolean; position: string }[];
-  combined: { id: number; event: string }[];
+  notes: string | null; event: string; travelers: number; merged_count: number; changed: boolean;
 };
 type Warning = { level: string; code: string; message: string };
 type WarningSet = { total: number; counts: Record<string, number>; warnings: Warning[] };
@@ -49,16 +45,20 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [sel, setSel] = useState<{ row: Row; month: number | null; nationwide: boolean } | null>(null);
   const [trips, setTrips] = useState<TripRow[] | null>(null);
-  const [detail, setDetail] = useState<Detail | null>(null);
+  const [openId, setOpenId] = useState<number | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [tick, setTick] = useState(0);
   const [warnings, setWarnings] = useState<WarningSet | null>(null);
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/plan/${year}/summary`);
     if (!r.ok) return setError("The plan could not be loaded. Please try again later.");
     setSummary((await r.json()) as Summary);
-    const w = await fetch(`/api/plan/${year}/warnings`);
-    if (w.ok) setWarnings((await w.json()) as WarningSet);
-  }, []);
+    if (canGenerate) {
+      const w = await fetch(`/api/plan/${year}/warnings`);
+      if (w.ok) setWarnings((await w.json()) as WarningSet);
+    }
+  }, [canGenerate]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -70,12 +70,11 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
     else if (sel.row.unit_id !== null) q.set("unit_id", String(sel.row.unit_id));
     if (sel.month) q.set("month", String(sel.month));
     void fetch(`/api/plan/${year}/trips?${q}`).then(async (r) => setTrips(r.ok ? ((await r.json()) as TripRow[]) : []));
-    setDetail(null);
-  }, [sel]);
+  }, [sel, tick]);
 
-  const open = async (id: number) => {
-    const r = await fetch(`/api/plan/trips/${id}`);
-    if (r.ok) setDetail((await r.json()) as Detail);
+  const changed = async () => {
+    setTick((t) => t + 1);
+    await load();
   };
 
   const max = Math.max(1, ...(summary ? [...summary.regions.flatMap((r) => r.rows), summary.nationwide].flatMap((r) => r.months) : [1]));
@@ -108,6 +107,12 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
           rebuilt from the rules, and trips that were edited or added by hand are kept and counted toward the rules. The checks on the
           right apply the same rules to the saved plan, so they also find problems after manual changes.
         </p>
+        <p>
+          <strong>Changing a trip.</strong> Open a trip and choose <em>Change this trip</em>. Every change needs a reason, which everyone who sees the
+          trip can read in its history. Before you save, the app shows which rules the change would break; a warning must be confirmed, and a rule
+          marked <em>block</em> does not allow the change. Trips you changed or added are kept when the plan is generated again. You can change the
+          trips of your own area only.
+        </p>
         <p>The plan uses working days only (Monday to Friday) and does not know public holidays yet.</p>
       </details>
 
@@ -125,6 +130,7 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
               </p>
             )}
           </div>
+          {!adding && <button onClick={() => setAdding(true)}>Add a trip</button>}
         </div>
         {error && <p className="problem">{error}</p>}
         {!summary && !error && <p>Loading…</p>}
@@ -152,6 +158,11 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
         )}
       </section>
 
+      {adding && (
+        <AddTrip year={year} onCancel={() => setAdding(false)}
+          onDone={(id) => { setAdding(false); setOpenId(id || null); void changed(); }} />
+      )}
+
       {sel && (
         <section className="card">
           <div className="head">
@@ -168,18 +179,26 @@ export default function Plan({ canGenerate }: { canGenerate: boolean }) {
                   <tr key={t.id}>
                     <td>{fmt(t.start_date, t.end_date)}</td>
                     <td>
-                      <button className="link" onClick={() => open(t.id)}>{t.title}</button>
+                      <button className="link" onClick={() => setOpenId(t.id)}>{t.title}</button>
                       {t.merged_count > 0 && <span className="muted"> · combined with {t.merged_count}</span>}
                     </td>
                     <td>{t.travelers}</td>
-                    <td>{t.source === "manual" ? <span className="badge">by hand</span> : t.status !== "generated" ? <span className="badge">{t.status}</span> : null}</td>
+                    <td>
+                      {t.source === "manual" && <span className="badge">by hand</span>}{" "}
+                      {t.changed && <span className="badge">changed</span>}{" "}
+                      {t.status !== "generated" && <span className="badge">{t.status}</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
-          {detail && <TripDetail d={detail} onClose={() => setDetail(null)} />}
+          {openId !== null && <TripPanel id={openId} onChanged={changed} onClose={() => setOpenId(null)} />}
         </section>
+      )}
+
+      {!sel && openId !== null && (
+        <section className="card"><TripPanel id={openId} onChanged={changed} onClose={() => setOpenId(null)} /></section>
       )}
 
       {warnings && <Checks w={warnings} />}
@@ -200,29 +219,6 @@ function RegionRows({ name, rows, cell, onRow }: {
         </tr>
       ))}
     </>
-  );
-}
-
-function TripDetail({ d, onClose }: { d: Detail; onClose: () => void }) {
-  return (
-    <div className="subform">
-      <div className="head">
-        <h4>{d.title}</h4>
-        <button className="link" onClick={onClose}>Close</button>
-      </div>
-      <p className="muted">{fmt(d.start_date, d.end_date)}</p>
-      {d.combined.length > 0 && <p className="note">Includes: {d.combined.map((c) => c.event).join(", ")}</p>}
-      {d.notes && <p className="muted">{d.notes}</p>}
-      <ul className="chips">
-        {d.participants.map((p) => (
-          <li key={p.name + p.role} className={p.role === "organizer" ? "chip strong" : "chip"}>
-            {p.name} · {p.position}
-            {p.role === "organizer" && " (organizer)"}
-            {!p.travels && " (host)"}
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 

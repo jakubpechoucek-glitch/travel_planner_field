@@ -132,6 +132,7 @@ class TripView:
     participants: dict[int, tuple[str, bool]]  # person id -> (role, travels)
     absorbed: bool = False
     status: str = "generated"
+    survivor_key: int | None = None  # the trip this one was combined into
 
 
 @dataclass
@@ -655,7 +656,8 @@ class Planner:
 
 
 def _view(t: TripOut) -> TripView:
-    return TripView(t.key, t.event_id, t.visited, t.start, t.end, t.participants, absorbed=t.absorbed_into is not None)
+    return TripView(t.key, t.event_id, t.visited, t.start, t.end, t.participants,
+                    absorbed=t.absorbed_into is not None, survivor_key=t.absorbed_into)
 
 
 def generate(inp: Inputs) -> Result:
@@ -670,9 +672,11 @@ def evaluate(trips: list[TripView], inp: Inputs) -> list[Warn]:
     world = World(inp)
     events = {e.id: e for e in inp.events}
     warns: list[Warn] = []
-    # a trip combined into a bigger one is stored as "cancelled" with a link; it still counts toward the quotas
-    live = [t for t in trips if t.status != "cancelled" or t.absorbed]
-    surviving = [t for t in live if not t.absorbed]
+    # a trip combined into a bigger one is stored as "cancelled" with a link; it still counts toward the quotas,
+    # but only while the bigger trip takes place
+    surviving = [t for t in trips if t.status != "cancelled" and not t.absorbed]
+    keys = {t.key for t in surviving}
+    live = surviving + [t for t in trips if t.absorbed and t.survivor_key in keys]
 
     # trip limits per person and period (rules across event types)
     for rule in inp.general_rules:

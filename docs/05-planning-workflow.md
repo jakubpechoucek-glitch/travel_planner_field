@@ -74,14 +74,27 @@ and weeks busy, so regenerating never duplicates them. The plan year must be in 
 
 ## 5.3 Manual changes and reasons
 
-Every trip can be moved, resized, reassigned, merged, split, cancelled, or added from scratch.
+Implemented in `backend/travel_planner/trip_edit.py` and the **Plan** page (open a trip, then *Change this trip*, *Cancel this trip*, *Confirm*, *Mark as done*; *Add a trip* for a trip the rules did not plan).
 
-- **Edits to a generated trip require a reason** (free text, plus an optional category such as *business request*, *conference conflict*, *merged with another trip*, *capacity*, *other*).
-- **Manually added trips** require a purpose (event type) and recommend a reason when they fall outside the rule plan.
-- The original generated values are kept, so the UI can show *planned by rule* versus *current*.
-- The change history (who, when, what, why) is visible on the trip and written to the audit log.
+**What can be changed:** dates (a move keeps the length, otherwise it is recorded as a resize), notes and title, the people (add or remove), cancelling, adding a trip by hand.
+Confirming a generated trip ("this is going to happen") and marking a trip as done are status changes; they are not deviations, so the app supplies the reason ("Confirmed by planner.", "Marked as done.").
+A trip can be marked as done once it has started.
 
-This directly implements the requirement that "anyone who is not aware of this exception would know and understand why this is happening".
+**The rules of a change**
+
+1. **A reason is mandatory** (at least 3 characters) for every change, including cancelling and adding a trip, plus a type: business request, conflict with a company event, combined with another trip, capacity, budget, other.
+   The database refuses a history row without a reason.
+2. **The effect is shown before saving.** The change is applied inside a transaction, the whole plan is checked again, and the *new* warnings are returned (and how many existing warnings the change resolves). A preview rolls back.
+3. **Warnings need an acknowledgement.** A rule with severity *warn* must be confirmed ("I understand these warnings and want to continue"); the acknowledgement is stored (`warning_ack`) with the reason. A rule with severity *block* refuses the change.
+4. **No lost updates.** Each trip carries an `updated_at` token. If someone else changed the trip in the meantime, the change is refused with a clear message.
+5. **History.** Every change is a `trip_change` row: who, when, kind (moved, resized, reassigned, edited, status, cancelled, created), reason, type, and before and after values. The rule-based dates are kept (`generated_start_date`, `generated_end_date`) so the app can show "Planned by the rules for ...".
+6. **Scope.** Administrators and national planners change everything. A regional planner changes trips in the units under their region; an area planner those of their cluster and its local offices. Nationwide trips are visible to every planner but changed only by administrators and national planners. A trip outside your scope appears as not found.
+7. **States.** Generated, confirmed (`planned`), requested and approved trips can be changed; done, cancelled and trips of a closed plan year cannot. A change after the plan was published is marked "after publication" in the history.
+8. **Regeneration respects it.** Any trip with a history row other than *created* or *generated*, every confirmed trip and every trip added by hand is kept when the plan is generated again, and it counts toward the quotas.
+
+Cancelling or adding a trip changes the quota of its place, so the app tells you ("Area Management Meeting, Alpha 2: 5 planned, at least 6 expected."). Cancelling a trip that includes a combined trip means the combined trip no longer takes place, and its quota effect is shown too.
+
+**Not yet built:** splitting a combined trip back into two trips, undoing a change, approval of a change by a manager, notifications, and changes made by travelers themselves.
 
 ## 5.4 Warnings and compliance
 

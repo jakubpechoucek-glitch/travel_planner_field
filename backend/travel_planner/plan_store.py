@@ -9,7 +9,10 @@ from typing import Any
 from psycopg import Connection
 
 from . import plan_engine as pe
+from .access import can_edit, can_see
 from .catalog import CatalogError, audit
+
+EDITABLE_STATUSES = ('generated', 'planned', 'requested', 'approved')
 
 REPLACEABLE_SQL = """
 SELECT t.id, t.merged_into_trip_id
@@ -44,7 +47,8 @@ def load_trip_views(conn: Connection, year: int, exclude: set[int] | None = None
         parts[r["trip_id"]][r["person_id"]] = (r["role"], r["travels"])
     return [
         pe.TripView(t["id"], t["event_type_id"], _unit_ref(t["unit_kind"], t["unit_id"]), t["start_date"],
-                    t["end_date"], parts[t["id"]], absorbed=t["merged_into_trip_id"] is not None, status=t["status"])
+                    t["end_date"], parts[t["id"]], absorbed=t["merged_into_trip_id"] is not None, status=t["status"],
+                    survivor_key=t["merged_into_trip_id"])
         for t in trips if t["id"] not in exclude
     ]
 
@@ -182,14 +186,23 @@ def generate_plan(conn: Connection, year: int, commit: bool, actor: int | None) 
 # ----------------------------------------------------------------------------------------- reading the plan
 
 
-def plan_summary(conn: Connection, year: int) -> dict[str, Any]:
+def _scope_sql(allowed: set[int] | None, column: str = "t.visited_org_unit_id") -> tuple[str, list]:
+    """SQL condition limiting trips to the places a person may see (nationwide trips are visible to every planner)."""
+    if allowed is None:
+        return "TRUE", []
+    return f"({column} IS NULL OR {column} = ANY(%s))", [sorted(allowed)]
+
+
+def plan_summary(conn: Connection, year: int, allowed: set[int] | None = None) -> dict[str, Any]:
     py = conn.execute("SELECT year, status FROM plan_year WHERE year = %s", (year,)).fetchone()
     if py is None:
         raise CatalogError(f"The plan year {year} does not exist.", 404)
     units = {u["id"]: u for u in conn.execute("SELECT id, kind, name, parent_id FROM org_unit WHERE active")}
+    scope, scope_args = _scope_sql(allowed)
     rows = conn.execute(
-        "SELECT visited_org_unit_id AS uid, EXTRACT(month FROM start_date)::int AS m, count(*) AS n "
-        "FROM trip WHERE plan_year = %s AND status <> 'cancelled' GROUP BY 1, 2", (year,)).fetchall()
+        "SELECT t.visited_org_unit_id AS uid, EXTRACT(month FROM t.start_date)::int AS m, count(*) AS n "
+        f"FROM trip t WHERE t.plan_year = %s AND t.status <> 'cancelled' AND {scope} GROUP BY 1, 2",  # noqa: S608
+        (year, *scope_args)).fetchall()
     cells: dict[tuple[str, int | None], list[int]] = defaultdict(lambda: [0] * 12)
     for r in rows:
         u = units.get(r["uid"])
@@ -207,23 +220,27 @@ def plan_summary(conn: Connection, year: int) -> dict[str, Any]:
             (u for u in units.values() if u["kind"] == "cluster" and u["parent_id"] == region["id"]),
             key=lambda u: u["name"])
         rows_ = [{"unit_id": c["id"], "label": c["name"], "months": cells.get(("cluster", c["id"]), [0] * 12)}
-                 for c in region_clusters]
-        rows_.append({"unit_id": region["id"], "label": "Region and local offices",
-                      "months": cells.get(("region", region["id"]), [0] * 12)})
-        out_regions.append({"id": region["id"], "name": region["name"], "rows": rows_})
+                 for c in region_clusters if allowed is None or c["id"] in allowed]
+        if allowed is None or region["id"] in allowed:
+            rows_.append({"unit_id": region["id"], "label": "Region and local offices",
+                          "months": cells.get(("region", region["id"]), [0] * 12)})
+        if rows_:
+            out_regions.append({"id": region["id"], "name": region["name"], "rows": rows_})
     nationwide = cells.get(("nationwide", None), [0] * 12)
     totals = conn.execute(
-        "SELECT count(*) FILTER (WHERE status <> 'cancelled') AS trips, "
-        "count(*) FILTER (WHERE status = 'cancelled' AND merged_into_trip_id IS NOT NULL) AS merged, "
-        "count(*) FILTER (WHERE source = 'manual' AND status <> 'cancelled') AS manual "
-        "FROM trip WHERE plan_year = %s", (year,)).fetchone()
+        "SELECT count(*) FILTER (WHERE t.status <> 'cancelled') AS trips, "
+        "count(*) FILTER (WHERE t.status = 'cancelled' AND t.merged_into_trip_id IS NOT NULL) AS merged, "
+        "count(*) FILTER (WHERE t.source = 'manual' AND t.status <> 'cancelled') AS manual "
+        f"FROM trip t WHERE t.plan_year = %s AND {scope}", (year, *scope_args)).fetchone()  # noqa: S608
     return {"year": year, "status": py["status"], "regions": out_regions,
-            "nationwide": {"unit_id": None, "label": "Nationwide events", "months": nationwide}, "totals": dict(totals)}
+            "nationwide": {"unit_id": None, "label": "Nationwide events", "months": nationwide},
+            "totals": dict(totals), "can_edit_all": allowed is None}
 
 
 def plan_trips(conn: Connection, year: int, unit_id: int | None, month: int | None, event_type_id: int | None,
-               nationwide: bool, limit: int = 500) -> list[dict[str, Any]]:
-    clauses, args = ["t.plan_year = %s", "t.status <> 'cancelled'"], [year]
+               nationwide: bool, limit: int = 500, allowed: set[int] | None = None) -> list[dict[str, Any]]:
+    scope, scope_args = _scope_sql(allowed)
+    clauses, args = ["t.plan_year = %s", "t.status <> 'cancelled'", scope], [year, *scope_args]
     if nationwide:
         clauses.append("t.visited_org_unit_id IS NULL")
     elif unit_id is not None:
@@ -238,32 +255,73 @@ def plan_trips(conn: Connection, year: int, unit_id: int | None, month: int | No
         args.append(event_type_id)
     rows = conn.execute(
         "SELECT t.id, t.title, t.start_date, t.end_date, t.status, t.source, t.notes, e.name AS event, e.code, "
+        "t.visited_org_unit_id, "
         "(SELECT count(*) FROM trip_participant p WHERE p.trip_id = t.id AND p.travels) AS travelers, "
-        "(SELECT count(*) FROM trip m WHERE m.merged_into_trip_id = t.id) AS merged_count "
+        "(SELECT count(*) FROM trip m WHERE m.merged_into_trip_id = t.id) AS merged_count, "
+        "EXISTS (SELECT 1 FROM trip_change c WHERE c.trip_id = t.id AND c.change_type NOT IN ('generated', 'created')) "
+        "AS changed "
         "FROM trip t JOIN event_type e ON e.id = t.event_type_id LEFT JOIN org_unit u ON u.id = t.visited_org_unit_id "
         f"WHERE {' AND '.join(clauses)} ORDER BY t.start_date, t.id LIMIT %s", (*args, limit)).fetchall()  # noqa: S608
     for r in rows:
         r["start_date"], r["end_date"] = str(r["start_date"]), str(r["end_date"])
+        r["editable"] = can_edit(allowed, r.pop("visited_org_unit_id"))
     return rows
 
 
-def trip_detail(conn: Connection, trip_id: int) -> dict[str, Any]:
+def trip_detail(conn: Connection, trip_id: int, allowed: set[int] | None = None) -> dict[str, Any]:
     t = conn.execute(
-        "SELECT t.*, e.name AS event FROM trip t JOIN event_type e ON e.id = t.event_type_id WHERE t.id = %s",
-        (trip_id,)).fetchone()
-    if t is None:
+        "SELECT t.*, e.name AS event, py.status AS plan_status, u.name AS place FROM trip t "
+        "JOIN event_type e ON e.id = t.event_type_id JOIN plan_year py ON py.year = t.plan_year "
+        "LEFT JOIN org_unit u ON u.id = t.visited_org_unit_id WHERE t.id = %s", (trip_id,)).fetchone()
+    if t is None or not can_see(allowed, t["visited_org_unit_id"]):
         raise CatalogError("The trip does not exist.", 404)
     people = conn.execute(
-        "SELECT p.full_name AS name, tp.role, tp.travels, pos.name AS position FROM trip_participant tp "
-        "JOIN person p ON p.id = tp.person_id JOIN person_assignment a ON a.person_id = p.id AND a.valid_to IS NULL "
+        "SELECT p.id AS person_id, p.full_name AS name, tp.role, tp.travels, pos.name AS position "
+        "FROM trip_participant tp JOIN person p ON p.id = tp.person_id "
+        "JOIN person_assignment a ON a.person_id = p.id AND a.valid_to IS NULL "
         "JOIN position pos ON pos.id = a.position_id WHERE tp.trip_id = %s "
         "ORDER BY (tp.role = 'organizer') DESC, tp.travels DESC, p.full_name", (trip_id,)).fetchall()
     merged = conn.execute(
         "SELECT t.id, e.name AS event FROM trip t JOIN event_type e ON e.id = t.event_type_id "
         "WHERE t.merged_into_trip_id = %s", (trip_id,)).fetchall()
-    return {"id": t["id"], "title": t["title"], "event": t["event"], "status": t["status"], "source": t["source"],
-            "start_date": str(t["start_date"]), "end_date": str(t["end_date"]), "notes": t["notes"],
-            "transport_mode": t["transport_mode"], "participants": people, "combined": merged}
+    editable = (can_edit(allowed, t["visited_org_unit_id"]) and t["status"] in EDITABLE_STATUSES
+                and t["plan_status"] != "closed")
+    return {"id": t["id"], "title": t["title"], "event": t["event"], "place": t["place"], "status": t["status"],
+            "source": t["source"], "start_date": str(t["start_date"]), "end_date": str(t["end_date"]),
+            "generated_start_date": str(t["generated_start_date"]) if t["generated_start_date"] else None,
+            "generated_end_date": str(t["generated_end_date"]) if t["generated_end_date"] else None,
+            "notes": t["notes"], "cancel_reason": t["cancel_reason"], "transport_mode": t["transport_mode"],
+            "plan_year": t["plan_year"], "plan_status": t["plan_status"], "updated_at": t["updated_at"].isoformat(),
+            "editable": editable, "participants": people, "combined": merged}
+
+
+def trip_history(conn: Connection, trip_id: int, allowed: set[int] | None = None) -> list[dict[str, Any]]:
+    t = conn.execute("SELECT visited_org_unit_id FROM trip WHERE id = %s", (trip_id,)).fetchone()
+    if t is None or not can_see(allowed, t["visited_org_unit_id"]):
+        raise CatalogError("The trip does not exist.", 404)
+    rows = conn.execute(
+        "SELECT c.id, c.changed_at, c.change_type, c.category, c.reason, c.before_data, c.after_data, "
+        "p.full_name AS changed_by FROM trip_change c LEFT JOIN person p ON p.id = c.changed_by "
+        "WHERE c.trip_id = %s ORDER BY c.changed_at DESC, c.id DESC", (trip_id,)).fetchall()
+    for r in rows:
+        r["changed_at"] = r["changed_at"].isoformat()
+        r["changed_by"] = r["changed_by"] or ("System" if r["change_type"] == "generated" else "Administrator")
+    return rows
+
+
+def plan_people(conn: Connection, allowed: set[int] | None, q: str | None, limit: int = 40) -> list[dict[str, Any]]:
+    clauses, args = ["p.active"], []
+    if allowed is not None:
+        clauses.append("(a.cluster_id = ANY(%s) OR a.region_id = ANY(%s) OR a.local_office_id = ANY(%s))")
+        args += [sorted(allowed)] * 3
+    if q:
+        clauses.append("p.full_name ILIKE %s")
+        args.append(f"%{q}%")
+    return conn.execute(
+        "SELECT p.id AS person_id, p.full_name AS name, pos.name AS position FROM person p "
+        "JOIN person_assignment a ON a.person_id = p.id AND a.valid_to IS NULL "
+        "JOIN position pos ON pos.id = a.position_id "
+        f"WHERE {' AND '.join(clauses)} ORDER BY pos.level, p.full_name LIMIT %s", (*args, limit)).fetchall()  # noqa: S608
 
 
 def plan_warnings(conn: Connection, year: int) -> dict[str, Any]:
@@ -274,4 +332,4 @@ def plan_warnings(conn: Connection, year: int) -> dict[str, Any]:
     return {"year": year, "total": len(warns), "counts": dict(counts), "warnings": [w.__dict__ for w in warns[:200]]}
 
 
-__all__ = ["generate_plan", "plan_summary", "plan_trips", "trip_detail", "plan_warnings"]
+__all__ = ["generate_plan", "plan_summary", "plan_trips", "trip_detail", "trip_history", "plan_people", "plan_warnings"]

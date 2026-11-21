@@ -44,6 +44,8 @@ export default function App() {
 
   const hasAccess = state.kind === "ready" && state.me.has_access;
   const isAdmin = state.kind === "ready" && state.me.roles.includes("administrator");
+  const canSeePlan =
+    state.kind === "ready" && state.me.roles.some((r) => ["administrator", "national_planner", "regional_planner", "area_planner"].includes(r));
   const canSeeOrg =
     state.kind === "ready" && state.me.roles.some((r) => r === "administrator" || r === "national_planner");
 
@@ -56,7 +58,7 @@ export default function App() {
       {hasAccess && (
         <nav className="tabs" aria-label="Main">
           <button className={tab === "home" ? "tab on" : "tab"} onClick={() => setTab("home")}>Home</button>
-          {canSeeOrg && (
+          {canSeePlan && (
             <button className={tab === "plan" ? "tab on" : "tab"} onClick={() => setTab("plan")}>Plan</button>
           )}
           <button className={tab === "catalog" ? "tab on" : "tab"} onClick={() => setTab("catalog")}>Events and rules</button>
@@ -67,7 +69,7 @@ export default function App() {
       )}
       {hasAccess && tab === "catalog" && <Catalog isAdmin={isAdmin} />}
       {canSeeOrg && tab === "org" && <Org isAdmin={isAdmin} />}
-      {canSeeOrg && tab === "plan" && <Plan canGenerate={canSeeOrg} />}
+      {canSeePlan && tab === "plan" && <Plan canGenerate={canSeeOrg} />}
       <section className="card" aria-live="polite" hidden={hasAccess && tab !== "home"}>
         {state.kind === "loading" && <p>Loading…</p>}
         {state.kind === "error" && <p className="problem">{state.message}</p>}

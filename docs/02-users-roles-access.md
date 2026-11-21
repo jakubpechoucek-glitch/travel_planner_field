@@ -52,6 +52,7 @@ Governance: at least two administrators, and every administrative change is writ
 | View | Audience | Content |
 |------|----------|---------|
 | **My plan** | Everyone | My trips, upcoming first, with status and reason for any change |
+| **Plan (own scope)** | Regional and area planners | The heatmap, trips and history of their own units; they can change those trips (see [Planning workflow](05-planning-workflow.md#53-manual-changes-and-reasons)). Plan-wide checks and plan generation stay with administrators and national planners |
 | **Calendar heatmap** | Planners | Rows = region/cluster/area, columns = month or week, cells = number of trips; click to drill down |
 | **Timeline** | Planners | Rows = people, columns = days; bars for trips; blackout periods shaded |
 | **Compliance** | RM, Head | Trips versus minimum and maximum per event type, per unit; highlights under- and over-use |

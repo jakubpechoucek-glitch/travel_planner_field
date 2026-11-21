@@ -97,7 +97,21 @@ questions the business needs to answer before the plan can be taken as a proposa
 | G6 | Weeks start on Monday and trips are Tuesday to Friday. Public holidays and company non-working days are unknown. | Provide the holiday calendar |
 | G7 | The generator treats a "participant" position above the organizer as optional (RM at an area meeting). | Confirm; otherwise set a yearly limit for it in the catalog |
 
-## 9.6 Product and design
+## 9.6 Manual editing decisions
+
+Decisions taken while building the editing; please confirm:
+
+| # | Decision | Alternative |
+|---|----------|-------------|
+| E1 | A reason is required for **every** manual change, also for adding or cancelling a trip. Confirming a trip and marking it as done are not deviations, so the app writes the reason. | Allow adding a trip without a reason when it is inside the rules |
+| E2 | **Warn** rules need an acknowledgement; **block** rules refuse the change. All quota and cap rules are seeded as *warn*, so nothing is blocked out of the box. | Make some rules *block* (for example the monthly trip limit) |
+| E3 | Regional planners change trips under their region, area planners those of their cluster and its local offices. Nationwide events are changed only by administrators and national planners. | Let regional planners also change nationwide events they attend |
+| E4 | A planner marks a trip as done once it has started. | Let the traveler confirm; require a short outcome note |
+| E5 | A combined trip cannot yet be split back into two trips. The workaround is to cancel it with a reason and add the trips by hand. | Build "split" (restores the combined trip as its own trip) |
+| E6 | After the plan is *published*, changes are allowed and marked "after publication" in the history. | Require approval by the Head of Field for changes after publication |
+| E7 | The administrator that signs in through the bootstrap setting has no person record, so the history shows "Administrator". | Link every administrator to a person on the first sign-in |
+
+## 9.7 Product and design
 
 | # | Question |
 |---|----------|
@@ -108,7 +122,7 @@ questions the business needs to answer before the plan can be taken as a proposa
 | U5 | Notifications: e-mail only, or also Microsoft Teams? (Not in MVP.) |
 | U6 | Time to retain trip history after the plan year closes? |
 
-## 9.7 Next steps
+## 9.8 Next steps
 
 1. Business owner reviews documents 1 to 5 and answers B1 to B12, P1 to P5.
 2. Follow-up meeting (the Thursday session proposed at the kickoff) to walk through the calendar views.

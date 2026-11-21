@@ -45,8 +45,10 @@ Progress:
 - [x] **Event catalog and rules**: starting catalog loaded, admin screens for event types, participation, rules (versioned), merge rules and blackouts, in-app help
 - [ ] Admin screens for users, roles and login linking
 - [x] **Plan generator**: rules to trips (weeks, blackouts, limits, combining, yearly limits), preview and regeneration that keeps edits, checks, heatmap and trip list
-- [ ] Manual editing of trips with mandatory reasons, warnings while editing
-- [ ] Scoped views for regional and area managers; people timeline; synergy suggestions
+- [x] **Manual editing with mandatory reasons**: change dates, people and notes, cancel, confirm, mark as done, add a trip by hand; live effect on the rules, acknowledgement of warnings, history, role scope
+- [x] Scoped plan view and editing for regional and area planners
+- [ ] Admin screens for users and login linking (needed to give regional and area planners their scope)
+- [ ] People timeline; synergy suggestions; "My plan" for supervisors; export
 
 **Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.
 

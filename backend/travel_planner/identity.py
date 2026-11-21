@@ -27,6 +27,7 @@ class Identity:
     person_id: int | None = None
     full_name: str | None = None
     roles: tuple[str, ...] = field(default_factory=tuple)
+    scopes: tuple[tuple[str, int | None], ...] = field(default_factory=tuple)  # (role, org unit the role covers)
 
     @property
     def has_access(self) -> bool:
@@ -76,14 +77,17 @@ def resolve_identity(request: Request) -> Identity:
     person_id: int | None = None
     full_name: str | None = None
     roles: set[str] = set()
+    scopes: tuple[tuple[str, int | None], ...] = ()
     with pool.connection() as conn:
         person = conn.execute(
             "SELECT id, full_name FROM person WHERE sso_key_hash = %s AND active", (kh,)
         ).fetchone()
         if person:
             person_id, full_name = person["id"], person["full_name"]
-            rows = conn.execute("SELECT role FROM user_role WHERE person_id = %s", (person_id,)).fetchall()
+            rows = conn.execute(
+                "SELECT role, scope_org_unit_id FROM user_role WHERE person_id = %s", (person_id,)).fetchall()
             roles.update(r["role"] for r in rows)
+            scopes = tuple((r["role"], r["scope_org_unit_id"]) for r in rows)
     if kh in settings.bootstrap_hashes:
         roles.add("administrator")
-    return Identity(kh, person_id, full_name, tuple(sorted(roles)))
+    return Identity(kh, person_id, full_name, tuple(sorted(roles)), scopes)
