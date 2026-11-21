@@ -33,9 +33,9 @@ cost_rate (Phase 2)        audit_log
 | Table | Purpose | Key points |
 |-------|---------|-----------|
 | `position` | Job positions and groups (Head of Field, RM, AM, FSV, Legal Specialist, ...) | `level` is used by rules; `is_traveler` is false for field collectors |
-| `org_unit` | Regions, clusters and local offices | Generic tree (`kind`, `parent_id`); a new layer is a new row, not a schema change |
+| `org_unit` | Regions, clusters and local offices | Generic tree (`kind`, `parent_id`); a new layer is a new row, not a schema change. `lead_person_id` is the RM of a region or the AM (or acting RM) of a cluster |
 | `location` | Cities and provinces where trips happen | Linked to region and local office; filled from the *Reference* sheet |
-| `person` | Identity of an employee | Name, employee number, active flag, `sso_key_hash` (keyed hash used to match the SSO login). **No e-mail address, no phone number.** |
+| `person` | Identity of an employee | Name, `name_key` (normalized name for matching), employee number, active flag, `sso_key_hash` (keyed hash used to match the SSO login). **No e-mail address, no phone number.** |
 | `person_assignment` | Effective-dated position, manager and unit | Plans use the assignment valid on the trip date; supports restructuring |
 | `meeting_group` / `_member` | Supervisors that meet together | An AM may have several groups |
 
@@ -114,6 +114,8 @@ are still `generated` and unedited.
 - Retention: trips and history are kept for the life of the plan year plus the period required by company policy *(to be confirmed)*.
 
 ## 6.7 Migrations
+
+Migration `0002_org_import.sql` adds `org_unit.lead_person_id`, `person.name_key` and seeds the field-hierarchy positions (`HEAD`, `RM`, `AM`, `SFSV`, `FSV2`, `FSV`, `DM`, `DSV`).
 
 Schema changes are versioned SQL migrations applied by the application at deployment (Alembic or a similar
 tool, to be chosen with the application framework). The baseline is `db/migrations/0001_baseline.sql`; further changes are added as numbered files and applied in order by `backend/travel_planner/migrate.py`, which records them in `travel.schema_migration`.

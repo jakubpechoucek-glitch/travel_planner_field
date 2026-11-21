@@ -56,6 +56,7 @@ Governance: at least two administrators, and every administrative change is writ
 | **Timeline** | Planners | Rows = people, columns = days; bars for trips; blackout periods shaded |
 | **Compliance** | RM, Head | Trips versus minimum and maximum per event type, per unit; highlights under- and over-use |
 | **Synergies** | Planners | Suggested merges or moves (same destination, nearby dates) |
+| **Organization** | Administrator, National planner | Regions, clusters, leaders, supervisor counts. Administrators also import the structure here |
 | **Administration** | Administrator | Users, org structure, event types, rules, blackout periods, plan years |
 
 ## 2.5 Principle of least privilege

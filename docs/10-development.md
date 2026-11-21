@@ -32,6 +32,18 @@ make lint     # ruff + TypeScript type check
 CI (`.github/workflows/ci.yml`) runs both on every push with a PostgreSQL service container.
 Tests drop and recreate the `travel` schema in the test database; never point `TEST_DATABASE_URL` at real data.
 
+## 10.3a Importing the organization
+
+```bash
+cd backend
+python -m travel_planner.orgimport /path/to/workbook.xlsx                  # preview: nothing is saved
+python -m travel_planner.orgimport /path/to/workbook.xlsx --apply --effective 2027-01-01
+```
+
+The same function runs behind **Organization → Import organization** in the app (administrator only; files up to 10 MB).
+The workbook contains personal data: keep it outside the repository (`*.xlsx` is git-ignored) and never use it in tests.
+Tests build a small fictitious workbook (`backend/tests/orgfixture.py`). Details: [Organization model](03-organization-model.md#35-the-organization-import-phase-1).
+
 ## 10.4 Configuration
 
 | Variable | Used in | Meaning |

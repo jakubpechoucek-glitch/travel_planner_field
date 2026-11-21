@@ -69,3 +69,39 @@ new frequencies, people leaving and joining. Therefore:
 
 The import is a one-time, repeatable admin action with a preview step and an error report
 (unmatched managers, duplicate employee numbers, unknown positions).
+
+## 3.5 The organization import (Phase 1)
+
+Administrators load the structure from the planning workbook, in the app (**Organization → Import organization**) or with
+`python -m travel_planner.orgimport workbook.xlsx [--apply] [--effective YYYY-MM-DD]` (see the [development guide](10-development.md)).
+
+**What the workbook must contain**
+
+- Sheet **Emp Tables** with side-by-side tables, each starting with an `EMP NAME` column and found by header names (not by cell address):
+  1) Regional Managers (name, position, region, cluster, local office), 2) Area Managers (same columns), 3) Supervisors (same columns),
+  4) optionally the Head of Field (name, position). Rows in table 1 whose position is "Head of ..." are also taken as the Head.
+- Sheet **EMP LIST FC upload** (optional): employee number, name, position, manager (column `AM`), region, local office (column `AREA`).
+  Other columns (user name, phone number, e-mail, and so on) are ignored and never read into the database.
+
+**How rules are applied**
+
+| Situation | Result |
+|-----------|--------|
+| Each cluster has one leader | The Area Manager. If the AM table names a Regional Manager or a "temp" AM, the **RM acts as leader** (info message) |
+| A supervisor's manager | The **leader of the supervisor's cluster**. The cluster tables are the authority; if the employee list names someone else, one grouped warning per cluster and manager is shown |
+| A supervisor is only in the employee list | Cluster is derived from the local office when it is unambiguous; otherwise a warning |
+| A Regional Manager's manager | The Head of Field, when found |
+| An RM covers two regions | The RM leads both regions; the RM's own assignment has no single region |
+| Positions | Matched by text to `HEAD`, `RM`, `AM`, `SFSV`, `FSV2`, `FSV`, `DM` (Digital Mentor), `DSV` (Digital Supervisor). Anything else is an **error** |
+| People | Matched by employee number, otherwise by normalized name; names are converted from ALL CAPS to normal case |
+| Local offices | Created as org units and as travel locations |
+
+**Safety properties**
+
+- **Preview first.** A preview performs the full write inside a transaction and rolls it back, so the counts are exact.
+- **Errors block saving.** Warnings do not. Nothing is partly imported.
+- **Idempotent.** Importing the same file again reports everything as unchanged.
+- **History.** A change with a later *Valid from* date closes the old assignment (the day before) and opens a new one.
+- **Nothing is deleted.** People missing from a later file are reported and left unchanged.
+- **No contact data.** E-mail addresses and phone numbers are not read; employee numbers and names are stored. Logins are linked later by an administrator.
+- Every applied import is written to the audit log (counts only, no names).

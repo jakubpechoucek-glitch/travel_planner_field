@@ -38,6 +38,13 @@ Status (Lakebase confirmed as available):
 | In-app help | Help panel, tooltips, getting-started tour (English) |
 | Admin | Users and roles, plan year lifecycle, audit log |
 
+Progress:
+
+- [x] **Organization import** (workbook → regions, clusters, local offices, people, reporting lines, effective dating, preview, audit)
+- [x] Organization page with structure view and in-app help
+- [ ] Admin screens for users, roles and login linking
+- [ ] Event catalog and rules (admin screens), generator, calendar views, manual editing, warnings
+
 **Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.
 
 **Exit criteria:** the Head of Field and three regional managers can generate and adjust the 2027 plan, see all overlaps, and export it; every override has a reason.

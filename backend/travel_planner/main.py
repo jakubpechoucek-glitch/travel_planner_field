@@ -17,6 +17,7 @@ from .config import Settings, get_settings
 from .db import create_pool
 from .identity import SESSION_COOKIE, Identity, key_hash, make_session, resolve_identity
 from .migrate import apply_migrations
+from .routes_org import router as org_router
 
 log = logging.getLogger("travel_planner")
 
@@ -43,6 +44,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(title="Travel Planner for Field Teams", version=__version__, lifespan=lifespan)
     app.state.settings = settings
+    app.include_router(org_router)
 
     @app.get("/api/health")
     def health() -> dict:

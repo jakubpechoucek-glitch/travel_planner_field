@@ -50,6 +50,20 @@ Items are grouped by who can answer. "Blocking" means design or build cannot con
 | D11 | The budget uses hard-coded numbers in formulas (for example 20,000 + 2 × 3,000 + 2,500 + 3 × 600). | Replace with named rates in `cost_rate` once the meaning of each term is confirmed. |
 | D12 | Source workbooks contain employee contact numbers and e-mails. | Not imported; keep out of the repository. |
 
+## 9.3a Findings from the first import of the real workbook
+
+The first run against the 2027 workbook produced 1 Head, 3 RMs, 11 AMs and 145 supervisors in 5 regions, 12 clusters and 20 local offices.
+These points need a business decision:
+
+| # | Finding | Handling now |
+|---|---------|--------------|
+| I1 | Six groups of supervisors (30 people in total) report to a different manager in the employee list than the cluster table names (for example, 11 supervisors in *North Luzon 2* list the *North Luzon 1* AM; 9 in *North Luzon 1* list the RM; 8 in *South Luzon 4*). The employee list seems older than the cluster table. | The **cluster table wins**; a grouped warning is shown. Confirm that it is right. |
+| I2 | Cluster *Cebu* has no AM: the RM acts as AM. | The RM leads the cluster; the RM is the manager of its supervisors. Add an end date when an AM is appointed. |
+| I3 | One supervisor is in the employee list but not in the FSV table. About 24 supervisors in the FSV table are not in the employee list, so they have **no employee number**. | They are matched by name. Provide employee numbers to make matching reliable. |
+| I4 | The workbook contains digital mentors (5) and digital supervisors (2) among supervisors. | Imported as positions `DM` and `DSV` at supervisor level. Confirm whether they travel and with which rules. |
+| I5 | The RM's own local office ("Mexico" for one RM) is a base, not a region. | Stored as the RM's base office (the office itself is taken from the AM and supervisor tables, which carry its region). |
+| I6 | Provinces (the *Reference* sheet) are not imported yet: its "area" names (*West Visayas*, *East Visayas*) do not match the cluster names (*Visayas West*, *Cebu*). | Local offices are loaded as locations. Provinces follow once the cluster names are agreed (D1). |
+
 ## 9.4 Product and design
 
 | # | Question |
