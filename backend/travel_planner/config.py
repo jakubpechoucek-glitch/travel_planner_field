@@ -19,7 +19,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    app_env: Literal["dev", "test", "prod"] = "dev"
+    app_env: Literal["dev", "test", "demo", "prod"] = "dev"
 
     # Local / test database (full connection URL). Not used in prod.
     database_url: str | None = None
@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     # Dev only: e-mail to use when no identity header is present.
     dev_user_email: str | None = None
 
+    # demo mode (hosting outside Databricks): sign-in with an access passcode instead of SSO
+    demo_passcode: str = ""
+    session_hours: int = 12
+    # Demo only: while no administrator exists, the first person to sign in becomes one.
+    demo_first_login_admin: bool = False
+
     run_migrations: bool = True
     migrations_dir: Path = REPO_ROOT / "db" / "migrations"
     frontend_dist: Path = REPO_ROOT / "frontend" / "dist"
@@ -53,6 +59,11 @@ class Settings(BaseSettings):
                 raise ValueError("DEV_USER_EMAIL must not be set in prod")
             if not (self.pghost and self.pgdatabase and self.pguser):
                 raise ValueError("PGHOST, PGDATABASE and PGUSER must be set in prod")
+        elif self.app_env == "demo":
+            if not (self.identity_key and self.demo_passcode and self.database_url):
+                raise ValueError("IDENTITY_KEY, DEMO_PASSCODE and DATABASE_URL must be set in demo")
+            if self.dev_user_email:
+                raise ValueError("DEV_USER_EMAIL must not be set in demo")
         elif not self.database_url:
             raise ValueError("DATABASE_URL must be set when APP_ENV is dev or test")
         return self

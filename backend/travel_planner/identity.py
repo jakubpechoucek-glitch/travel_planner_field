@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import time
 from dataclasses import dataclass, field
 
 from fastapi import HTTPException, Request
@@ -32,17 +33,46 @@ class Identity:
         return bool(self.roles)
 
 
+SESSION_COOKIE = "tp_session"
+
+
+def _sign(settings: Settings, kh: str, expires: int) -> str:
+    msg = f"session|{kh}|{expires}".encode()
+    return hmac.new(settings.identity_key.encode(), msg, hashlib.sha256).hexdigest()
+
+
+def make_session(settings: Settings, kh: str) -> str:
+    """Signed session value: key hash, expiry and signature. Contains no e-mail address."""
+    expires = int(time.time()) + settings.session_hours * 3600
+    return f"{kh}.{expires}.{_sign(settings, kh, expires)}"
+
+
+def read_session(settings: Settings, value: str | None) -> str | None:
+    try:
+        kh, expires, sig = (value or "").split(".")
+        if int(expires) < time.time() or not hmac.compare_digest(sig, _sign(settings, kh, int(expires))):
+            return None
+        return kh
+    except ValueError:
+        return None
+
+
 def resolve_identity(request: Request) -> Identity:
     settings: Settings = request.app.state.settings
     pool: ConnectionPool = request.app.state.pool
 
-    email = request.headers.get(settings.identity_header)
-    if not email and settings.app_env != "prod":
-        email = settings.dev_user_email  # dev/test convenience only
-    if not email:
+    kh: str | None = None
+    if settings.app_env == "demo":
+        kh = read_session(settings, request.cookies.get(SESSION_COOKIE))
+    else:
+        email = request.headers.get(settings.identity_header)
+        if not email and settings.app_env != "prod":
+            email = settings.dev_user_email  # dev/test convenience only
+        if email:
+            kh = key_hash(email, settings.identity_key)
+    if not kh:
         raise HTTPException(status_code=401, detail="Not signed in")
 
-    kh = key_hash(email, settings.identity_key)
     person_id: int | None = None
     full_name: str | None = None
     roles: set[str] = set()

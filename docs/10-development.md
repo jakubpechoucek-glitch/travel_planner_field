@@ -36,13 +36,14 @@ Tests drop and recreate the `travel` schema in the test database; never point `T
 
 | Variable | Used in | Meaning |
 |----------|---------|---------|
-| `APP_ENV` | all | `dev`, `test` or `prod` |
+| `APP_ENV` | all | `dev`, `test`, `demo` (trial hosting) or `prod` (Databricks) |
 | `DATABASE_URL` | dev, test | Full PostgreSQL URL |
 | `PGHOST`, `PGDATABASE`, `PGUSER`, `PGPORT`, `PGSSLMODE` | prod | Lakebase connection; the password is a short-lived OAuth token fetched at connect time |
 | `IDENTITY_KEY` | all | Secret for the e-mail hash. **Changing it unlinks every user**, so treat it as permanent |
 | `BOOTSTRAP_ADMIN_HASHES` | all | Comma-separated key hashes of the first administrators |
 | `IDENTITY_HEADER` | all | Header with the signed-in user's e-mail (default `X-Forwarded-Email`; verify on Databricks) |
 | `DEV_USER_EMAIL` | dev, test | Fallback identity. The app refuses to start in prod if this is set |
+| `DEMO_PASSCODE`, `DEMO_FIRST_LOGIN_ADMIN`, `SESSION_HOURS` | demo | Trial hosting only (see 10.7) |
 | `RUN_MIGRATIONS` | all | Apply pending migrations on start (default true) |
 
 The app refuses to start in `prod` without `IDENTITY_KEY` and the three Lakebase variables.
@@ -65,7 +66,21 @@ Open points to verify on the real workspace: the identity header name, how the L
 principal (`backend/travel_planner/db.py`), the port and command conventions in `app.yaml`, and whether the sync step honors `.gitignore`
 (`frontend/dist` must be included in the deployed files).
 
-## 10.7 Conventions
+## 10.7 Trial hosting outside Databricks (demo mode)
+
+For trials before the Databricks deployment, the app can run on any container host (the first trial runs on Render:
+one web service built from the `Dockerfile`, plus a managed PostgreSQL 16 database).
+
+- `APP_ENV=demo` replaces SSO with a sign-in form: work e-mail plus a shared **access code** (`DEMO_PASSCODE`).
+  The e-mail is hashed immediately and never stored; the session cookie holds only the hash, expiry and signature.
+- `DEMO_FIRST_LOGIN_ADMIN=true` makes the first person who signs in the administrator while no administrator exists.
+  Turn it off (or set `BOOTSTRAP_ADMIN_HASHES`) once the right person is in.
+- Failed sign-ins are throttled (10 per minute, in memory).
+- Required variables: `DATABASE_URL`, `IDENTITY_KEY`, `DEMO_PASSCODE`. Use **fictitious data only** in a trial; it is not
+  the production environment and has not been through the data protection review.
+- Demo mode is not a substitute for SSO: do not load real employee data into a trial installation.
+
+## 10.8 Conventions
 
 - American English in code, comments, UI text and documentation.
 - No e-mail addresses or phone numbers in the database, logs, test data or repository. Use `@example.test` addresses in tests.
