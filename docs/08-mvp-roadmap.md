@@ -55,7 +55,7 @@ Progress:
 - [x] **Choosing the area later** (Special Area visits hold a region slot) and **follow-up of actions** (up to three per trip, closed within 30 days), with the *Follow-ups* view
 - [x] **Synergy suggestions** (same place, close dates; dismissable)
 - [x] **"Suggest a change"** from a supervisor to the manager (My plan → Plan → Suggestions)
-- [ ] People timeline
+- [x] **People timeline** (Plan → People: rows are people, columns are days, days away, clashes, blackout periods)
 
 **Not in MVP:** costs, lead-time checks, approval states, itineraries, outcome documents, other functions' event catalogs, integrations, notifications.
 

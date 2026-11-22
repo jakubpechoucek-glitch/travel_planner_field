@@ -77,7 +77,7 @@ Implemented on the **Users** page (administrators only; `backend/travel_planner/
 | **My plan** | Everyone with a linked sign-in (supervisors land here) | The trips the person takes part in, as organizer, traveler or host, grouped by month; the next trip; status (proposed, confirmed, done, cancelled); the original date and the reason when a trip was moved or changed; who else is on the trip; calendar export (.ics). Supervisors see it once the plan is published; planners see their own trips while it is under review. Cancelled and earlier trips are folded away |
 | **Plan (own scope)** | Regional and area planners | The heatmap, trips and history of their own units; they can change those trips (see [Planning workflow](05-planning-workflow.md#53-manual-changes-and-reasons)). Plan-wide checks and plan generation stay with administrators and national planners |
 | **Calendar heatmap** | Planners | Rows = region/cluster/area, columns = month or week, cells = number of trips; click to drill down |
-| **Timeline** | Planners | Rows = people, columns = days; bars for trips; blackout periods shaded |
+| **People timeline** | Planners (own scope) | Rows = people, columns = days (a month or a quarter); bars for trips; days away per person; two trips at once outlined; blackout periods shaded (Plan → People) |
 | **Follow-ups** | Planners (own scope) | Trips with a follow-up: actions still to be recorded, in progress, late or closed (Plan → Follow-ups) |
 | **Compliance** | RM, Head | Trips versus minimum and maximum per event type, per unit; highlights under- and over-use |
 | **Synergies** | Planners (own scope) | Suggested merges or moves: trips to the same place a few days apart, with the people who travel on both (Plan → Synergies) |

@@ -5,6 +5,7 @@ import Timeline from "./Timeline";
 import FollowUps from "./FollowUps";
 import Synergies from "./Synergies";
 import Requests from "./Requests";
+import PeopleTimeline from "./PeopleTimeline";
 import { Icon } from "./icons";
 
 type Row = { unit_id: number | null; label: string; months: number[] };
@@ -60,7 +61,7 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
   const [withCancelled, setWithCancelled] = useState(false);
   const [tick, setTick] = useState(0);
   const [warnings, setWarnings] = useState<WarningSet | null>(null);
-  const [view, setView] = useState<"timeline" | "heatmap" | "followups" | "synergies" | "requests">("timeline");
+  const [view, setView] = useState<"timeline" | "heatmap" | "followups" | "synergies" | "requests" | "people">("timeline");
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/plan/${year}/summary`);
@@ -156,6 +157,9 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
           second year (set in Events and rules) is planned in its years only; in the other years the preview lists it as <em>not held in that year</em>.
         </p>
         <p>
+          <strong>People.</strong> The <em>People</em> view has one row per person and one column per day, for a month or a quarter. A bar is a trip; the number next to a name is the days away. Shaded stripes are blackout periods, and a red outline marks a person who is on two trips at once. Filter by area or name, and click a bar to open the trip.
+        </p>
+        <p>
           <strong>Suggestions.</strong> People on a trip can suggest a change in My plan (a new date, or that they cannot take part). The <em>Suggestions</em> view lists those for your trips. Make the change in the trip, then mark the suggestion accepted, or decline it with a reason; the person sees your answer.
         </p>
         <p>
@@ -243,10 +247,12 @@ export default function Plan({ year, years, canGenerate, onYears, onYear }: {
           <div className="segctl" role="group" aria-label="View" style={{ margin: "6px 0 14px" }}>
             <button type="button" className={view === "timeline" ? "on" : ""} onClick={() => setView("timeline")}>Timeline</button>
             <button type="button" className={view === "heatmap" ? "on" : ""} onClick={() => setView("heatmap")}>Heatmap by month</button>
+            <button type="button" className={view === "people" ? "on" : ""} onClick={() => setView("people")}>People</button>
             <button type="button" className={view === "followups" ? "on" : ""} onClick={() => setView("followups")}>Follow-ups</button>
             <button type="button" className={view === "synergies" ? "on" : ""} onClick={() => setView("synergies")}>Synergies</button>
             <button type="button" className={view === "requests" ? "on" : ""} onClick={() => setView("requests")}>Suggestions{openRequests > 0 ? ` (${openRequests})` : ""}</button>
           </div>
+          {view === "people" && <PeopleTimeline year={year} summary={summary} tick={tick} onOpen={setOpenId} />}
           {view === "followups" && <FollowUps year={year} tick={tick} onOpen={setOpenId} />}
           {view === "synergies" && <Synergies year={year} tick={tick} onOpen={setOpenId} />}
           {view === "requests" && <Requests year={year} tick={tick} onOpen={setOpenId} onChanged={() => void loadRequests()} />}

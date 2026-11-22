@@ -156,6 +156,14 @@ The **Plan** page has two views, switched at the top of the plan card:
 
 ![Figure 3. The timeline: each bar is a trip, colors are event families.](timeline)
 
+### Who is where: the People view
+
+Open **Plan → People** to see the plan person by person: one row per person, one column per day, for a month or a quarter.
+
+- A **bar** is a trip the person travels on, in the color of its event family; hatched bars are still proposed. Click it to open the trip. Tick **Include people who host a visit** to add the hosts (shown lighter).
+- The **number** next to a name is the days away in the window. A **red outline** marks a person who is on two trips at once. **Striped areas** are blackout periods; the dashed line is today.
+- Use ‹ and › to move the window, **Month / Quarter** to change its length, and filter by **Area** or **Person**. Sort by **Days away** to see who travels the most.
+
 ![Figure 4. The heatmap by month; clicking a cell lists its trips.](heatmap)
 
 ### Changing a trip
@@ -441,6 +449,8 @@ The starting catalog includes events that give the Head of Field time on the gro
 | Why does a trip show a whole region instead of an area? | Its area is chosen later. Planners choose it in the trip before the date shown (section 4.2). |
 | I cannot go on a trip. What do I do? | Open My plan, select Suggest a change on the trip and choose I cannot take part. Your manager decides. |
 | Where do I see the answer to my suggestion? | On the trip card in My plan: Accepted or Declined, with the answer. |
+| How do I see who is away in a given week? | Plan → People shows one row per person and one column per day. Use the Month or Quarter window and the Area filter. |
+| Why does a person have a red outline? | They are on two trips at the same time (Plan → People). Open one of the trips and move it, with a reason. |
 | Why does the application suggest moving a trip? | Another trip goes to the same place within a few days (Plan → Synergies). It is only a hint: you can dismiss it. |
 | Where do I see actions that are still open? | Plan → Follow-ups lists the trips with open or missing actions; Home shows a summary. |
 | Where is the plan for next year? | An administrator or national planner opens it with Plan → Open plan year. Then choose it in the Plan year list. |

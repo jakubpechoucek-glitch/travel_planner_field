@@ -205,6 +205,15 @@ Only managers change the plan, but the people on a trip know things the plan doe
 - The planner opens the trip and makes the change as usual (with a reason), then **marks the suggestion accepted** (optional note, for example the new date), or **declines** it with a reason. The person reads the answer on the trip card in My plan.
 - A person has at most one open suggestion per trip and can **withdraw** it. Only trips that have not taken place yet, in a plan that is in review or published, can get a suggestion. Everything is written to the audit log; nothing is sent by e-mail.
 
+## 5.12 People timeline
+
+**Plan → People** answers "who is where, when". One row per person, one column per day, for a month or a quarter of the plan year (previous and next buttons move the window).
+
+- A bar is a trip the person travels on, in the color of its event family (hatched = still proposed). Click it to open the trip. *Include people who host a visit* adds the hosts (shown lighter).
+- The number next to a name is the **days away** in the window (calendar days, counted once even when trips overlap). A red outline marks a person who is **on two trips at once**; the plan checks list the same cases.
+- **Blackout periods** of the plan year are shaded with stripes. A dashed line marks today.
+- Filter by area (a region, or one of its areas) or by name; sort by name or by days away. Planners see the people on the trips of their own scope. Only people with trips in the window appear (at most 250), and a window is at most 125 days.
+
 ## 5.8 In-app help
 
 Every screen has a **Help** panel and contextual tooltips in American English, covering:

@@ -60,6 +60,12 @@ curl -X POST "http://localhost:8000/api/admin/plan/2027/generate?commit=false"  
 
 A rule is held every N years with `params.every_n_years` and `params.first_year` (quota and cadence rules only); the generator skips the event in the other years and reports it under *skipped*.
 
+## 10.3c-5 People timeline (API)
+
+| Endpoint | Who | Purpose |
+|----------|-----|---------|
+| `GET /api/plan/{year}/people-timeline?start=&end=&unit_id=&q=&hosts=` | planners (own scope) | People with trips in a window of at most 125 days: trips, days away, clashes, and the blackout periods of the window |
+
 ## 10.3c-4 Suggesting a change (API)
 
 | Endpoint | Who | Purpose |

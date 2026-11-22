@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -14,6 +15,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 
 from . import actions, change_requests, plan_export, synergy
+from . import people_timeline as pt
 from . import plan_store as store
 from . import trip_edit as edit
 from .access import allowed_units, has_plan_access
@@ -233,6 +235,14 @@ def decide_request(request_id: int, body: change_requests.DecideIn, request: Req
                    who: Identity = Depends(plan_access)) -> dict:
     return _db(request, lambda conn, allowed: change_requests.decide(conn, request_id, body, who, allowed),
                commit=True, who=who, scoped=True)
+
+
+@router.get("/plan/{year}/people-timeline")
+def people_timeline(year: int, request: Request, start: date, end: date, unit_id: int | None = None,
+                    q: str | None = Query(None, max_length=60), hosts: bool = False,
+                    who: Identity = Depends(plan_access)) -> dict:
+    return _db(request, lambda conn, allowed: pt.people_timeline(conn, year, allowed, start, end, unit_id, q, hosts),
+               who=who, scoped=True)
 
 
 @router.get("/plan/{year}/synergies")
